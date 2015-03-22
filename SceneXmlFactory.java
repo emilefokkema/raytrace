@@ -42,7 +42,7 @@ public class SceneXmlFactory {
 		if(this.sch!=null){
 			try{
 				DocumentBuilder db=dbf.newDocumentBuilder();
-				Document xml=db.parse(new File("c:\\Users\\efokkema\\Desktop\\raytrace\\scene.xml"));
+				Document xml=db.parse(new File(xmlPath));
 				return xml;
 			}catch(ParserConfigurationException e){
 				e.printStackTrace();
