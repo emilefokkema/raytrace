@@ -105,6 +105,33 @@ public class SceneXml {
 		}
 		return s;
 	}
+	public Viewport getViewPort(){
+		Element viewPort=(Element)((Element)xml.getElementsByTagName("scene").item(0)).getElementsByTagName("viewport").item(0);
+		double x,y,z;
+		Element leftTop_=(Element)viewPort.getElementsByTagName("lefttop").item(0);
+			x=Double.parseDouble(leftTop_.getAttribute("x"));
+			y=Double.parseDouble(leftTop_.getAttribute("y"));
+			z=Double.parseDouble(leftTop_.getAttribute("z"));
+			Point leftTop=new Point(x,y,z);
+		Element leftAxis_=(Element)viewPort.getElementsByTagName("leftaxis").item(0);
+			x=Double.parseDouble(leftAxis_.getAttribute("x"));
+			y=Double.parseDouble(leftAxis_.getAttribute("y"));
+			z=Double.parseDouble(leftAxis_.getAttribute("z"));
+			Point leftAxis=new Point(x,y,z);
+		Element topAxis_=(Element)viewPort.getElementsByTagName("topaxis").item(0);
+			x=Double.parseDouble(topAxis_.getAttribute("x"));
+			y=Double.parseDouble(topAxis_.getAttribute("y"));
+			z=Double.parseDouble(topAxis_.getAttribute("z"));
+			Point topAxis=new Point(x,y,z);
+		Element viewPoint_=(Element)viewPort.getElementsByTagName("viewpoint").item(0);
+			x=Double.parseDouble(viewPoint_.getAttribute("x"));
+			y=Double.parseDouble(viewPoint_.getAttribute("y"));
+			z=Double.parseDouble(viewPoint_.getAttribute("z"));
+			Point viewPoint=new Point(x,y,z);
+		int w=Integer.parseInt(viewPort.getAttribute("w"));
+		int h=Integer.parseInt(viewPort.getAttribute("h"));
+		return new Viewport(leftTop, leftAxis, topAxis, viewPoint).setSize(w, h);
+	}
 	public Rotation getRotation(String id){
 		Element e=getElementById(id);
 		if(e!=null){

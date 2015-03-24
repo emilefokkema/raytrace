@@ -6,12 +6,12 @@ public class PixelCalculator implements Runnable{
 	private Point viewPoint;
 	private Viewport v;
 	private Scene s;
-	public PixelCalculator(int l, int t, MyImage i, Point viewPoint, Viewport v, Scene s, int depth){
+	public PixelCalculator(int l, int t, MyImage i, Viewport v, Scene s, int depth){
 		this.l=l;
 		this.t=t;
 		this.i=i;
 		this.depth=depth;
-		this.viewPoint=viewPoint;
+		this.viewPoint=v.viewPoint;
 		this.v=v;
 		this.s=s;
 	}

@@ -7,7 +7,7 @@ public class XmlTest {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		SceneXmlFactory sf=SceneXmlFactory.getInstance();
-		SceneXml sx=new SceneXml(sf.getSceneXml("c:\\Users\\Emile\\Desktop\\raytrace\\scene.xml"));
+		SceneXml sx=new SceneXml(sf.getSceneXml("c:\\Users\\efokkema\\Desktop\\raytrace\\scene.xml"));
 		
 		ArrayList<Rotation> rotations=sx.getGroupRotations();
 		System.out.println(rotations.size()+", "+(rotations.get(1)==null));

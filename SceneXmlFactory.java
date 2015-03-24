@@ -19,7 +19,7 @@ public class SceneXmlFactory {
 	public static SceneXmlFactory getInstance(){
 		Schema sch=null;
 		try{
-			sch=SchemaFactory.newInstance("http://www.w3.org/2001/XMLSchema").newSchema(new File("c:\\Users\\Emile\\Desktop\\raytrace\\xml_schema.xsd"));
+			sch=SchemaFactory.newInstance("http://www.w3.org/2001/XMLSchema").newSchema(new File("c:\\Users\\efokkema\\Desktop\\raytrace\\xml_schema.xsd"));
 		}catch(SAXException e){
 			e.printStackTrace();
 		}

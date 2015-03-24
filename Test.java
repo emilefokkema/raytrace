@@ -20,9 +20,10 @@ public class Test {
 		SceneXmlFactory sf=SceneXmlFactory.getInstance();
 		SceneXml sx=new SceneXml(sf.getSceneXml("c:\\Users\\efokkema\\Desktop\\raytrace\\scene.xml"));
 		Scene s1=sx.getScene();
-
-		System.out.println(Line.intersectPlanes(new Point(1,1,0), new Point(1,1,0), new Point(-1,1,0), new Point(-1,1,0)));
-		int h=600;
+		Viewport v1=sx.getViewPort();
+		
+		
+		int h=200;
 		double ratio=(double)279/(double)498;
 		Point leftTop=new Point(1.6, 1.6*ratio, -1);
 		int w=(int)((double)h*(double)leftTop.x/(double)leftTop.y);
@@ -32,19 +33,15 @@ public class Test {
         Rotation r3=new Rotation(Point.origin, 0, -0.3).before(new Point(0, 13, 0), 0, Math.PI / 6);
 		Rotation r2=new Rotation(Point.origin, 1, -Math.PI/4+0);
 		Point translation=new Point(0,0,0);
-		Viewport v=new Viewport(leftTop, leftAxis, topAxis).setSize(w, h).rotate(r);
-		//Viewport v=new Viewport(leftTop, leftAxis, topAxis).setScale((double)2*leftTop.y/(double)h).rotate(r);
+		Point viewPoint=new Point(0,0,-19);
+		Viewport v=new Viewport(leftTop, leftAxis, topAxis, viewPoint).setSize(w, h).rotate(r);
 		
-		Point viewPoint=new Point(0,0,-19).rotate(r);
+		
 		double radius=0.5;
 		double distance=1.1;
 		Shape sh=new Sphere(Point.origin, radius, new MyColor(0,0,0)).setReflection(1).setDiffusion(0).setShininess(0);
 		Shape sh2=new Sphere(new Point(distance, 0, 0),radius, new MyColor(0,0,0)).setDiffusion(0).setReflection(0.6).setTransparency(1).setRefractionIndex(0.5).setShininess(0);
 		Shape sh3=new Sphere(new Point(-distance, 0, 0),radius, new MyColor(20,20,20)).setDiffusion(1.3).setReflection(0).setShininess(0);
-		double corner=10;
-		double back=18;
-        MyColor wallColor=new MyColor(17, 17, 17);
-        double windowIntensity=230;
         double x=-8.86, y=10.47;
 
         ColorPattern circles=new Circles(0.5,0.0003,new MyColor(60,60,60), 1, x-0.5,y-0.5, 30);
@@ -56,43 +53,21 @@ public class Test {
 
 		Shape ceiling=new Plane(new Point(0,16,0), new Point(0,-1,0),new MyColor(30, 30, 30)).setReflection(0).setDiffusion(1);
 		ceiling.add(new Rectangle(-27,-16,9,9,new MyColor(0), 1,0.2));
-		Shape wall1=new Plane(new Point(10, 0, 10), new Point(-1, 0, 0),new MyColor(windowIntensity).setReflectable()).setReflection(0);
-        Shape p1=new Plane(new Point(9.75, 0, 10), new Point(-1, 0, 0),wallColor).setDiffusion(0.2).setReflection(0);
+		Shape wall1=new Plane(new Point(10, 0, 10), new Point(-1, 0, 0),new MyColor(230).setReflectable()).setReflection(0);
+        Shape p1=new Plane(new Point(9.75, 0, 10), new Point(-1, 0, 0),new MyColor(17, 17, 17)).setDiffusion(0.2).setReflection(0);
         Shape partition=new RectangleSection((Plane)p1, 0,10,18,11.5);
-		Shape wall2=new Plane(new Point(0, 0, 10), new Point(0,0,-1),wallColor).setReflection(0).setDiffusion(0.2);
-		Shape wall3=new Plane(new Point(-18, 0, -17), new Point(0,0,1),wallColor).setReflection(0).setDiffusion(0.2);
-		Shape wall4=new Plane(new Point(-28, 0, -18), new Point(1, 0, 0),wallColor).setReflection(0).setDiffusion(0.2);
-		double lightSourceIntensity=180;
-		LightSource ls=new LightSource(new Point(0, 9, -4), new MyColor(lightSourceIntensity), 15);
+		Shape wall2=new Plane(new Point(0, 0, 10), new Point(0,0,-1),new MyColor(17, 17, 17)).setReflection(0).setDiffusion(0.2);
+		Shape wall3=new Plane(new Point(-18, 0, -17), new Point(0,0,1),new MyColor(17, 17, 17)).setReflection(0).setDiffusion(0.2);
+		Shape wall4=new Plane(new Point(-28, 0, -18), new Point(1, 0, 0),new MyColor(17, 17, 17)).setReflection(0).setDiffusion(0.2);
+		LightSource ls=new LightSource(new Point(0, 9, -4), new MyColor(180), 15);
 		Scene s=new Scene().add(table).add(wall1).add(partition).add(wall2).add(wall3).add(wall4).add(ceiling).add(ls).rotate(r2).translate(translation).add(sh).add(sh2).add(sh3).add(paper);
 		
+		//SceneImageWriter w1=new SceneImageWriter(s, v, "c:\\Users\\efokkema\\Desktop\\raytrace\\image.bmp", 7);
+		//w1.write();
 		
-		MyImage i=new MyImage(w, h);
-		int d=7;
-		ExecutorService executor = Executors.newFixedThreadPool(4);
-		for(int l=1;l<=w;l++){
-			for(int t=1;t<=h;t++){
-				Runnable pixelCalculator=new PixelCalculator(l, t, i, viewPoint, v, s, d);
-				executor.execute(pixelCalculator);
-			}
-		}
-		executor.shutdown();
-		while(!executor.isTerminated()){}
-		System.out.println("a");
-		/*for(int l=1;l<=w;l++){
-			for(int t=1;t<=h;t++){
-                MyColor c1=s.getNextColor(viewPoint, v.getPoint(l+0.25, t+0.25).minus(viewPoint), d);
-                MyColor c2=s.getNextColor(viewPoint, v.getPoint(l+0.25, t+0.75).minus(viewPoint), d);
-                MyColor c3=s.getNextColor(viewPoint, v.getPoint(l+0.75, t+0.25).minus(viewPoint), d);
-                MyColor c4=s.getNextColor(viewPoint, v.getPoint(l+0.75, t+0.75).minus(viewPoint), d);
-				i.setColor(l, t, c1.scale(0.25).add(c2.scale(0.25)).add(c3.scale(0.25)).add(c4.scale(0.25)));
-			}
-		}*/
+		SceneImageWriter w2=new SceneImageWriter(s1, v1, "c:\\Users\\efokkema\\Desktop\\raytrace\\image2.bmp", 3);
+		w2.write();
 		
-		BufferedImage bi=i.makeBitmap();
-		File f=new File("c:\\Users\\efokkema\\Desktop\\raytrace\\image.bmp");
-		ImageIO.write(bi, "bmp", f);
-        System.out.println("b");
 		
 	}
 	

@@ -1,14 +1,15 @@
 package raytrace;
 
 public class Viewport {
-	public Point topLeft, unitLeftAxis, unitTopAxis;
+	public Point topLeft, unitLeftAxis, unitTopAxis, viewPoint;
 	public int w, h;
-	public Viewport(Point topLeft, Point leftAxis, Point topAxis){
+	public Viewport(Point topLeft, Point leftAxis, Point topAxis, Point viewPoint){
 		this.topLeft=topLeft;
 		//this.unitLeftAxis=leftAxis.unit();
 		//this.unitTopAxis=topAxis.unit();
 		this.unitLeftAxis=leftAxis;
 		this.unitTopAxis=topAxis;
+		this.viewPoint=viewPoint;
 	}
 	public Viewport setScale(double scale){
 		this.unitLeftAxis=this.unitLeftAxis.scale(scale);
@@ -37,6 +38,7 @@ public class Viewport {
 		this.topLeft=this.topLeft.rotate(r);
 		this.unitLeftAxis=this.unitLeftAxis.rotate(r).minus(this.topLeft);
 		this.unitTopAxis=this.unitTopAxis.rotate(r).minus(this.topLeft);
+		this.viewPoint=this.viewPoint.rotate(r);
 		return this;
 	}
 }
