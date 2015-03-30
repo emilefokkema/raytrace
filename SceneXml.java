@@ -24,6 +24,12 @@ public class SceneXml {
 		Point normal=getPoint((Element)e.getElementsByTagName("normal").item(0));
 		return new Plane(point, normal, c);
 	}
+	private static Sphere getSphere(Element e){
+		MyColor c=new MyColor(e.getAttribute("color"));
+		Point center=getPoint((Element)e.getElementsByTagName("center").item(0));
+		double radius=Double.parseDouble(e.getAttribute("radius"));
+		return new Sphere(center, radius, c);
+	}
 	private static LightSource getLightSource(Element e){
 		Point location=getPoint((Element)e.getElementsByTagName("location").item(0));
 		MyColor c=new MyColor(e.getAttribute("color"));
@@ -41,11 +47,20 @@ public class SceneXml {
 	}
 	private static ArrayList<Shape> getShapes(Element group){
 		NodeList planeList=group.getElementsByTagName("plane");
+		NodeList sphereList=group.getElementsByTagName("sphere");
 		ArrayList<Shape> s=new ArrayList<Shape>();
 		for(int i=0;i<planeList.getLength();i++){
 			Element plane=(Element)planeList.item(i);
+			System.out.println("[getShapes] adding plane");
 			s.add(getPlane(plane));
 		}
+		for(int i=0;i<sphereList.getLength();i++){
+			Element sphere=(Element)sphereList.item(i);
+			System.out.println("[getShapes] adding sphere");
+			s.add(getSphere(sphere));
+		}
+		System.out.println("[getShapes] how many: "+s.size());
+		//System.out.println(s.get(1));
 		return s;
 	}
 	private static Rotation getGroupRotation(Element group){
@@ -95,14 +110,18 @@ public class SceneXml {
 			Rotation r=getGroupRotation(group);
 			ArrayList<LightSource> lightSources=getLightSources(group);
 			ArrayList<Shape> shapes=getShapes(group);
+			System.out.println("[getScene] size of shapes: "+shapes.size());
+			//System.out.println(shapes.get(1));
 			for(int j=0;j<lightSources.size();j++){
 				s.add(lightSources.get(j));
 			}
 			for(int j=0;j<shapes.size();j++){
-				s.add(shapes.get(i));
+				System.out.println("[getScene] adding shape");
+				s.add(shapes.get(j));
 			}
 			if(r!=null){s.rotate(r);}
 		}
+		//System.out.println(s.shapes.get(1));
 		return s;
 	}
 	public Viewport getViewPort(){
