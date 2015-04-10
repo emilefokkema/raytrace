@@ -18,17 +18,26 @@ public class SceneXml {
 		double z=Double.parseDouble(e.getAttribute("z"));
 		return new Point(x,y,z);
 	}
+	private static Shape setShapeAttributes(Shape s, Element e){
+		String att;
+		if(!(att=e.getAttribute("reflection")).equals("")){s.setReflection(Double.parseDouble(att));}
+		if(!(att=e.getAttribute("diffusion")).equals("")){s.setDiffusion(Double.parseDouble(att));}
+		//s.setDiffusion(0.4);
+		return s;
+	}
 	private static Plane getPlane(Element e){
 		MyColor c=new MyColor(e.getAttribute("color"));
 		Point point=getPoint((Element)e.getElementsByTagName("point").item(0));
 		Point normal=getPoint((Element)e.getElementsByTagName("normal").item(0));
-		return new Plane(point, normal, c);
+		return (Plane)setShapeAttributes(new Plane(point, normal, c), e);
+		//return new Plane(point, normal, c);
 	}
 	private static Sphere getSphere(Element e){
 		MyColor c=new MyColor(e.getAttribute("color"));
 		Point center=getPoint((Element)e.getElementsByTagName("center").item(0));
 		double radius=Double.parseDouble(e.getAttribute("radius"));
-		return new Sphere(center, radius, c);
+		return (Sphere)setShapeAttributes(new Sphere(center, radius, c), e);
+		//return new Sphere(center, radius, c);
 	}
 	private static LightSource getLightSource(Element e){
 		Point location=getPoint((Element)e.getElementsByTagName("location").item(0));

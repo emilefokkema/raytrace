@@ -10,10 +10,10 @@ public class XmlTest {
 		SceneXml sx=new SceneXml(sf.getSceneXml("c:\\Users\\efokkema\\Desktop\\raytrace\\scene.xml"));
 		
 		ArrayList<Rotation> rotations=sx.getGroupRotations();
-		System.out.println(rotations.size()+", "+(rotations.get(1)==null));
+		//System.out.println(rotations.size()+", "+(rotations.get(1)==null));
 		
 		ArrayList<ArrayList<LightSource>> lll=sx.getLightSourcesInGroups();
-		System.out.println(lll.get(1).size());
+		//System.out.println(lll.get(1).size());
 		
 		Scene s=sx.getScene();
 		System.out.println(s.shapes.size());
