@@ -1406,8 +1406,10 @@ var SvgScene=function(){
 					text.value=s1;
 					text.select();
 				};
-				return {dialog: xmlDialog,text: text,showXml:showXml};
+				var hideFrom=function(where_){where_.removeChild(xmlDialog);};
+				return {dialog: xmlDialog,text: text,showXml:showXml, hideFrom:hideFrom};
 			})();
+			svgObject.controls.push(xmlDialog);
 
 			svgObject.controls.push(makeButton({left:'15%',bottom:0},'shapes', function(){shapeListDialog.showShapeList(sceneShapeList());}, function(){},0.75,{width:'15%',height:'10%'}).append(where));
 			var shapeListDialog=(function(){
@@ -1448,9 +1450,11 @@ var SvgScene=function(){
 					shapeListDialog.appendChild(thing);
 				};
 				var remove=function(thing){shapeListDialog.removeChild(thing);};
+				var hideFrom=function(where_){where_.removeChild(shapeListDialog);};
 				where.appendChild(shapeListDialog);
-				return {showShapeList: showShapeList, append: append, remove: remove};
+				return {showShapeList: showShapeList, append: append, remove: remove, hideFrom:hideFrom};
 			})();
+			svgObject.controls.push(shapeListDialog);
 
 			var sceneShapeList=function(){
 				var makeRow={
@@ -1663,8 +1667,10 @@ var SvgScene=function(){
 					jsonDialog.style.display="initial";
 					text.value=s1;
 				};
-				return {dialog: jsonDialog,text: text,showJson:showJson};
+				var hideFrom=function(where_){where_.removeChild(jsonDialog);};
+				return {dialog: jsonDialog,text: text,showJson:showJson,hideFrom:hideFrom};
 			})();
+			svgObject.controls.push(jsonDialog);
 
 			var sceneJson=function(){
 
@@ -1941,15 +1947,18 @@ var SvgScene=function(){
 var scene1=new SvgScene();
 scene1.init(document.getElementById("viewPort"), {
 viewport: {
-lefttop: [0.3402006750544194,0.3015869531817476,-0.1496790520549766],
-leftaxis: [-0.4089966641681692,0.06183905494194791,-0.15410320016220613],
-topaxis: [0.07199757829832615,-0.2661242768809916,-0.297875988839394],
-viewpoint: [0.3181273101786271,0.5269461341632635,-0.6328691266581522]
+lefttop: [0.3978787922027179,0.43736805482170893,0.0645603555028515],
+leftaxis: [-0.31774474216815707,-0.09635129488389366,-0.2960514920710795],
+topaxis: [0.18288977321126815,-0.25520651013691087,-0.11323295783852266],
+viewpoint: [0.5341203035577721,0.5455354138389102,-0.4510863568817325]
 },
 shapes: [
 {type: "plane", point: [0,-1,0], normal: [0,1,0], color: [100,100,100]},
-{type: "lightsource", center: [0,2,0], radius: 0.1, color: [50,50,0]},
-{type: "sphere", center: [0,0,0], radius: 0.1, color: [150,0,0]}
+{type: "lightsource", center: [0,2,0], radius: 0.3, color: [100,100,0]},
+{type: "lightsource", center: [-0.5,0.25,-0.5], radius: 0.1, color: [100,100,0]},
+{type: "sphere", center: [0,0,0], radius: 0.1, color: [150,0,0]},
+{type: "sphere", center: [0.25,0,0], radius: 0.1, color: [0,0,100]},
+{type: "sphere", center: [0,0,0.25], radius: 0.1, color: [0,100,0]}
 ]
 });
 
