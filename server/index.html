@@ -1,6 +1,6 @@
 <html>
 <head>
-	<title>SVG test 2</title>
+	<title>Traceray</title>
 </head>
 <body style="overflow: hidden;background-color:rgb(0,0,0)">
 	<!-- <div style="position:absolute;top:0;left:0;border:1px solid #000000;width:50%;height:50%;background-color:#333333" id="viewPort"></div>
@@ -908,20 +908,36 @@ var SvgScene=function(){
 		SphereFactory.draw();
 	};
 
-	var Interaction=(function(){
-		var sceneXml;
+	var sceneXml=function(){
+		var s='<?xml version="1.0" encoding="UTF-8"?><scene xmlns="http://www.sogyo.nl/efokkema_raytrace" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ><group>';
+		var planes=PlaneFactory.planes();
+		for(var i=0;i<planes.length;i++){
+			s+=planes[i].toString();
+		}
+		var lightSources=SphereFactory.lightSources();
+		for(var i=0;i<lightSources.length;i++){
+			s+=lightSources[i].toString();
+		}
+		var spheres=SphereFactory.spheres();
+		for(var i=0;i<spheres.length;i++){
+			s+=spheres[i].toString();
+		}
+		return s+'</group>'+viewPort.toString()+'</scene>';
+	};
 
-		var setSceneXml=function(string){
-			sceneXml=string;
-		};
+	var Interaction=(function(){
+
 		var doSomething=function(){
 			var req=new XMLHttpRequest();
 			req.onload=function(){console.log(this.responseText);};
-			req.open("GET","test.txt", true);
-			req.send();
+			req.open("POST","/", true);
+			req.setRequestHeader("Content-type","application/x-www-form-urlencoded");
+			var s=sceneXml();
+			console.log("sending xml...");
+			req.send(s+"\n");
 		};
 		return {
-			setSceneXml: setSceneXml,
+			
 			doSomething: doSomething
 		};
 	})();
@@ -1154,7 +1170,7 @@ var SvgScene=function(){
 			svgpl.remove=function(){whereSvg.removeChild(svgElement);};
 			svgpl.setColor=function(color1){
 				color=color1;
-				highligher=newHighlighter(color1, svgElement);
+				highlighter=newHighlighter(color1, svgElement);
 				svgElement.setAttribute('style', 'fill: '+color1.toString()+';fill-opacity: 0.4');
 			};
 			svgpl.highlightOn=function(){highlighter.on();};
@@ -1363,9 +1379,6 @@ var SvgScene=function(){
 			};
 
 			svgObject.controls.push(makeButton({left:0,bottom:0},'XML',function(){
-				var s=sceneXml();
-				xmlDialog.showXml(s);
-				Interaction.setSceneXml(s);
 				Interaction.doSomething();
 			}, function(){},0.75,{width:'15%',height:'10%'}).append(where));
 			var xmlDialog=(function(){
@@ -1395,23 +1408,6 @@ var SvgScene=function(){
 				};
 				return {dialog: xmlDialog,text: text,showXml:showXml};
 			})();
-
-			var sceneXml=function(){
-				var s='<?xml version="1.0" encoding="UTF-8"?><scene xmlns="http://www.sogyo.nl/efokkema_raytrace" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ><group>';
-				var planes=PlaneFactory.planes();
-				for(var i=0;i<planes.length;i++){
-					s+=planes[i].toString();
-				}
-				var lightSources=SphereFactory.lightSources();
-				for(var i=0;i<lightSources.length;i++){
-					s+=lightSources[i].toString();
-				}
-				var spheres=SphereFactory.spheres();
-				for(var i=0;i<spheres.length;i++){
-					s+=spheres[i].toString();
-				}
-				return s+'</group>'+viewPort.toString()+'</scene>';
-			};
 
 			svgObject.controls.push(makeButton({left:'15%',bottom:0},'shapes', function(){shapeListDialog.showShapeList(sceneShapeList());}, function(){},0.75,{width:'15%',height:'10%'}).append(where));
 			var shapeListDialog=(function(){
@@ -1898,7 +1894,7 @@ var SvgScene=function(){
 				var h_=whereSvg.offsetHeight;
 				svgObject.setWh(w_,h_);
 				viewPort.setWh(w_,h_);
-				if(things_.viewport){
+				if(things_&&things_.viewport){
 					(function(){
 						var viewport=things_.viewport;
 						var lefttop=makePoint(viewport.lefttop);
@@ -1945,20 +1941,15 @@ var SvgScene=function(){
 var scene1=new SvgScene();
 scene1.init(document.getElementById("viewPort"), {
 viewport: {
-lefttop: [1.601911055025886,0.6328976262778765,-0.03903263559745329],
-leftaxis: [-0.6966716325141133,0.10212062369395003,-1.229230641621834],
-topaxis: [-0.018045631188047473,-1.2969206598189131,-0.09751666063628961],
-viewpoint: [2.1905249720320987,0.06247900513894969,-1.2362986748776068]
+lefttop: [0.3402006750544194,0.3015869531817476,-0.1496790520549766],
+leftaxis: [-0.4089966641681692,0.06183905494194791,-0.15410320016220613],
+topaxis: [0.07199757829832615,-0.2661242768809916,-0.297875988839394],
+viewpoint: [0.3181273101786271,0.5269461341632635,-0.6328691266581522]
 },
 shapes: [
-{type: "plane", point: [0,-0.2,0], normal: [0,1,0], color: [100,75,75, true]},
-{type: "plane", point: [0,0,0.25], normal: [0,0,-1], color: [75,75,100]},
-{type: "lightsource", center: [0,3,0], radius: 1, color: [100,100,50]},
-{type: "lightsource", center: [0,3,-5], radius: 1, color: [100,100,50]},
-{type: "sphere", center: [0,0,0], radius: 0.1, color: [0,0,100]},
-{type: "sphere", center: [0,0.5,0], radius: 0.1, color: [0,0,100]},
-{type: "sphere", center: [0.5,0,0], radius: 0.1, color: [0,0,100]},
-{type: "sphere", center: [0.5,0.5,0], radius: 0.1, color: [0,0,100]}
+{type: "plane", point: [0,-1,0], normal: [0,1,0], color: [100,100,100]},
+{type: "lightsource", center: [0,2,0], radius: 0.1, color: [50,50,0]},
+{type: "sphere", center: [0,0,0], radius: 0.1, color: [150,0,0]}
 ]
 });
 

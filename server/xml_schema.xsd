@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.sogyo.nl/efokkema_raytrace" xmlns="http://www.sogyo.nl/efokkema_raytrace" elementFormDefault="qualified">
+	<xs:element name="scene">
+		<xs:complexType>
+			<xs:sequence>
+			<xs:element name="group" type="group" minOccurs="0" maxOccurs="unbounded"/>
+			<xs:element name="viewport" type="viewPort" minOccurs="0" maxOccurs="1"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	
+	<xs:complexType name="rotation">
+		<xs:sequence>
+			<xs:element name="point" type="point" minOccurs="1" maxOccurs="1" />
+		</xs:sequence>
+		<xs:attribute name="id" type="xs:ID"/>
+		<xs:attribute name="axis" type="xs:integer"/>
+		<xs:attribute name="angle" type="xs:decimal"/>
+	</xs:complexType>
+	
+	<xs:complexType name="point">
+		<xs:attribute name="x" use="required" type="xs:decimal" />
+		<xs:attribute name="y" use="required" type="xs:decimal" />
+		<xs:attribute name="z" use="required" type="xs:decimal" />
+		
+	</xs:complexType>
+	
+	<xs:complexType name="group">
+		<xs:sequence>
+			<xs:choice minOccurs="1" maxOccurs="unbounded">
+				<xs:element name="lightsource" type="lightSource" />
+				<xs:element name="plane" type="plane" />
+				<xs:element name="sphere" type="sphere" />
+			</xs:choice>
+			<xs:element name="rotation" type="rotation" minOccurs="0" maxOccurs="unbounded" />
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="plane">
+		<xs:sequence>
+			<xs:element name="point" type="point" minOccurs="1" maxOccurs="1" />
+			<xs:element name="normal" type="point" minOccurs="1" maxOccurs="1" />
+		</xs:sequence>
+		<xs:attributeGroup ref="shapeAttributes" />
+	</xs:complexType>
+	
+	<xs:complexType name="sphere">
+		<xs:sequence>
+			<xs:element name="center" type="point" minOccurs="1" maxOccurs="1" />
+		</xs:sequence>
+		<xs:attributeGroup ref="shapeAttributes" />
+		<xs:attribute name="radius" type="xs:decimal" />
+	</xs:complexType>
+	
+	<xs:attributeGroup name="shapeAttributes">
+		<xs:attribute name="reflection" type="xs:decimal" use="optional" />
+		<xs:attribute name="diffusion" type="xs:decimal" use="optional" />
+		<xs:attribute name="color" type="colorString" use="required" />
+	</xs:attributeGroup>
+	
+	<xs:complexType name="lightSource">
+		<xs:sequence>
+			<xs:element name="location" type="point" minOccurs="1" maxOccurs="1" />
+		</xs:sequence>
+		<xs:attribute name="color" type="colorString"/>
+		<xs:attribute name="radius" type="xs:decimal"/>
+	</xs:complexType>
+	
+	<xs:complexType name="viewPort">
+		<xs:sequence>
+			<xs:element name="lefttop" type="point" minOccurs="1" maxOccurs="1" />
+			<xs:element name="leftaxis" type="point" minOccurs="1" maxOccurs="1" />
+			<xs:element name="topaxis" type="point" minOccurs="1" maxOccurs="1" />
+			<xs:element name="viewpoint" type="point" minOccurs="1" maxOccurs="1" />
+		</xs:sequence>
+		<xs:attribute name="w" type="xs:integer" use="required" />
+		<xs:attribute name="h" type="xs:integer" use="required" />
+	</xs:complexType>
+	
+	<xs:simpleType name="colorString">
+		<xs:restriction base="xs:string">
+			<xs:pattern value="\d{1,3},\s?\d{1,3},\s?\d{1,3}t?"/>
+		</xs:restriction>
+	</xs:simpleType>
+	
+</xs:schema>
+
