@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
@@ -17,6 +19,14 @@ import java.util.Calendar;
 import java.util.Locale;
 
 public class RaytraceServer implements Runnable{
+	public static String path="c:\\Users\\efokkema\\Desktop\\raytrace\\server";
+	private static int numberOfScenes=0;
+	public static String[] getNextXmlAndImagePath(){
+		numberOfScenes++;
+		String s1=path+"\\xml\\scene"+numberOfScenes+".xml";
+		String s2=path+"\\images\\"+numberOfScenes+".bmp";
+		return new String[]{s1, s2};
+	}
 	public void run(){
 		ServerSocket socket;
 		try{
@@ -64,30 +74,33 @@ class ConnectionHandler implements Runnable{
 			BufferedReader reader=new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			lines=new ArrayList<String>();
 			String line=reader.readLine();
-			System.out.println();
-			while(!(line==null||line.isEmpty())){
+			System.out.println("[NEW REQUEST]");
+			while(!(line.isEmpty())){
 				lines.add(line);
 				line=reader.readLine();
 			}
 			response=new Response().setStatus(HTTPStatusCode.OK);
+			response.setContent("something else...");
 			if(lines.size()>0){
 				request=new Request(lines);
-				request.print();
 			}
 			String contentLength;
 			if(request!=null&&request.getHttpMethod()==HTTPMethod.POST&&(contentLength=request.getHeaderParameterValue("Content-Length"))!=null){
 				if(Integer.parseInt(contentLength)>0){
 					line=reader.readLine();
-					if(!line.isEmpty()){request.setPostQueryString(line);}
+					System.out.println(line);
+					XmlHandler xmlhandler=new XmlHandler(line, RaytraceServer.path+"\\xml_schema.xsd");
+					xmlhandler.makeImage();
+					response.setContent("file:///"+(xmlhandler.getImageFilePath().replace('\\', '/')));
 				}
 			}
-			if(request!=null&&request.getResourcePath().equals("/")){
+			if(request!=null&&request.getHttpMethod()==HTTPMethod.GET&&request.getResourcePath().equals("/")){
 				try{
-					response.setFileContent("c:\\Users\\efokkema\\Desktop\\raytrace\\server\\index.html");
+					response.setFileContent(RaytraceServer.path+"\\index.html");
 				}catch(FileNotFoundException e){
 					response.setStatus(HTTPStatusCode.NotFound);
 				}
-				}else{response.setContent("something else...");}
+				}else{}
 			BufferedWriter writer=new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
 			writer.write(response.toString());
 			writer.flush();
@@ -129,6 +142,11 @@ class Request{
 	}
 	public String getHeaderParameterValue(String key){
 		String s=null;
+		for(int i=0;i<this.headerKeyValuePairs.size();i++){
+			if(this.headerKeyValuePairs.get(i)[0].equals(key)){
+				s=this.headerKeyValuePairs.get(i)[1];
+			}
+		}
 		return s;
 	}
 	public void setPostQueryString(String s){
@@ -173,5 +191,47 @@ class Response{
 		}
 		r.close();
 		//this.content=filePath;
+	}
+}
+class XmlHandler{
+	private String xmlString;
+	private String xmlSchemaPath;
+	private String xmlFilePath, imageFilePath;
+	private void writeXmlToFile() throws FileNotFoundException, UnsupportedEncodingException{
+		PrintWriter writer = new PrintWriter(this.xmlFilePath, "UTF-8");
+		writer.println(this.xmlString);
+		writer.close();
+	}
+	public XmlHandler(String xmlString, String xmlSchemaPath){
+		this.xmlSchemaPath=xmlSchemaPath;
+		this.xmlString=xmlString;
+		String[] p=RaytraceServer.getNextXmlAndImagePath();
+		this.xmlFilePath=p[0];
+		this.imageFilePath=p[1];
+		try{
+			writeXmlToFile();
+		}catch(UnsupportedEncodingException e){
+			e.printStackTrace();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	public String getImageFilePath(){
+		return this.imageFilePath;
+	}
+	public void makeImage(){
+		SceneXmlFactory sf=SceneXmlFactory.getInstance(this.xmlSchemaPath);
+		SceneXml sx=new SceneXml(sf.getSceneXml(this.xmlFilePath));
+		Scene s1=sx.getScene();
+		Viewport v1=sx.getViewPort();
+		
+		SceneImageWriter w2=new SceneImageWriter(s1, v1, this.imageFilePath, 5);
+		try {
+			w2.write();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }
