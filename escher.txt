@@ -1,0 +1,41 @@
+//		int h=200;
+//		double ratio=(double)279/(double)498;
+//		Point leftTop=new Point(1.6, 1.6*ratio, -1);
+//		int w=(int)((double)h*(double)leftTop.x/(double)leftTop.y);
+//		Point leftAxis=new Point(-3.2, 0, 0);
+//		Point topAxis=new Point(0, -3.2, 0).scale(ratio);
+//		Rotation r=new Rotation(new Point(0,0,-0.5), 0, Math.PI*0.4).before(new Point(0,0,-1), 0, -0.38);
+//        Rotation r3=new Rotation(Point.origin, 0, -0.3).before(new Point(0, 13, 0), 0, Math.PI / 6);
+//		Rotation r2=new Rotation(Point.origin, 1, -Math.PI/4+0);
+//		Point translation=new Point(0,0,0);
+//		Point viewPoint=new Point(0,0,-19);
+//		Viewport v=new Viewport(leftTop, leftAxis, topAxis, viewPoint).setSize(w, h).rotate(r);
+//		
+//		
+//		double radius=0.5;
+//		double distance=1.1;
+//		Shape sh=new Sphere(Point.origin, radius, new MyColor(0,0,0)).setReflection(1).setDiffusion(0).setShininess(0);
+//		Shape sh2=new Sphere(new Point(distance, 0, 0),radius, new MyColor(0,0,0)).setDiffusion(0).setReflection(0.6).setTransparency(1).setRefractionIndex(0.5).setShininess(0);
+//		Shape sh3=new Sphere(new Point(-distance, 0, 0),radius, new MyColor(20,20,20)).setDiffusion(1.3).setReflection(0).setShininess(0);
+//        double x=-8.86, y=10.47;
+//
+//        ColorPattern circles=new Circles(0.5,0.0003,new MyColor(60,60,60), 1, x-0.5,y-0.5, 30);
+//		Shape table=new Plane(new Point(10,-radius,10), new Point(0,1,0),new MyColor(0,0,0)).setReflection(0.8).setDiffusion(0).setRoughness(0.2).add(circles);
+//        Shape p=new Plane(new Point(-1.66,-radius+0.02,-1.19), Point.unitY, new MyColor(160,160,160));
+//        Shape paper=new RectangleSection((Plane)p,0,0,3.33,2).setReflection(0);
+//        ColorPattern drawing=new Rectangle(0.2,0.2,3.13,1.8,new MyColor(0), 0.5);
+//        paper.add(drawing);
+//
+//		Shape ceiling=new Plane(new Point(0,16,0), new Point(0,-1,0),new MyColor(30, 30, 30)).setReflection(0).setDiffusion(1);
+//		ceiling.add(new Rectangle(-27,-16,9,9,new MyColor(0), 1,0.2));
+//		Shape wall1=new Plane(new Point(10, 0, 10), new Point(-1, 0, 0),new MyColor(230).setReflectable()).setReflection(0);
+//        Shape p1=new Plane(new Point(9.75, 0, 10), new Point(-1, 0, 0),new MyColor(17, 17, 17)).setDiffusion(0.2).setReflection(0);
+//        Shape partition=new RectangleSection((Plane)p1, 0,10,18,11.5);
+//		Shape wall2=new Plane(new Point(0, 0, 10), new Point(0,0,-1),new MyColor(17, 17, 17)).setReflection(0).setDiffusion(0.2);
+//		Shape wall3=new Plane(new Point(-18, 0, -17), new Point(0,0,1),new MyColor(17, 17, 17)).setReflection(0).setDiffusion(0.2);
+//		Shape wall4=new Plane(new Point(-28, 0, -18), new Point(1, 0, 0),new MyColor(17, 17, 17)).setReflection(0).setDiffusion(0.2);
+//		LightSource ls=new LightSource(new Point(0, 9, -4), new MyColor(180), 15);
+//		Scene s=new Scene().add(table).add(wall1).add(partition).add(wall2).add(wall3).add(wall4).add(ceiling).add(ls).rotate(r2).translate(translation).add(sh).add(sh2).add(sh3).add(paper);
+//		
+		//SceneImageWriter w1=new SceneImageWriter(s, v, "c:\\Users\\efokkema\\Desktop\\raytrace\\image.bmp", 7);
+		//w1.write();
