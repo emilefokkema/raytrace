@@ -14,7 +14,7 @@ var SvgScene=function(){
 		var r=r_;
 		var g=g_;
 		var b=b_;
-		var reflectable=false;
+		var reflectable=true;
 		var confine=function(){
 			var c=function(v){return Math.floor(Math.max(Math.min(v,255), 0));}
 			r=c(r);
@@ -29,13 +29,56 @@ var SvgScene=function(){
 			r: function(){confine();return r},
 			g: function(){confine();return g},
 			b: function(){confine();return b},
-			setReflectable: function(){reflectable=true;return this;},
+			setReflectable: function(b){reflectable=b;return this;},
+			isReflectable: function(){return reflectable;},
 			plus: function(color){
 				return Color(r+color.r(),g+color.g(),b+color.b());
 			},
 			scale: function(r_){return Color(r*r_,g*r_,b*r_);}
 		};
-	}
+	};
+
+	var ShapeAttributeSet=function(attrs){
+		var attrNames=["reflection", "diffusion", "shininess", "transparency", "refractionIndex", "roughness"];
+		var attrValues=[0.5, 0.5, 0.5, 0, 1, 0];
+		var getAttributeByName=function(name){
+			var v=0;
+			for(var i=0;i<attrNames.length;i++){
+				if(attrNames[i]==name){v=attrValues[i];}
+			}
+			return v;
+		};
+		var setAttributes=function(attrs){
+			//attrs is like {reflection: 0.5, shininess: 0.3}
+			for(var i=0;i<attrNames.length;i++){
+				var n=attrNames[i];
+				if(attrs.hasOwnProperty(n)){attrValues[i]=attrs[n];}
+			}
+		};
+		var toString=function(){
+			var s='';
+			for(var i=0;i<attrNames.length;i++){s+=attrNames[i]+'="'+attrValues[i]+'" ';}
+			return s;
+		};
+		var clone=function(){
+			var attrs={};
+			for(var i=0;i<attrNames.length;i++){
+				attrs[attrNames[i]]=attrValues[i];
+			}
+			return ShapeAttributeSet(attrs);
+		};
+		var getAttrNames=function(){return attrNames;};
+		if(attrs){setAttributes(attrs);}
+		return {
+			getAttributeByName: getAttributeByName,
+			setAttributes: setAttributes,
+			toString: toString,
+			getAttrNames: getAttrNames,
+			clone: clone
+		};
+	};
+
+	console.log(ShapeAttributeSet().toString());
 
 	var threeD=(function(){
 		var Point=function(x_, y_, z_){
@@ -536,10 +579,12 @@ var SvgScene=function(){
 		var planes=[];
 		var currentNumber=0;
 		var Plane=function(point_, normal_, color_){
-			var point, normal, color, thisSvg, gridLines, xAxis, yAxis;
+			var point, normal, color, thisSvg, gridLines, xAxis, yAxis, shapeAttributes;
 			point=point_;
 			normal=normal_;
 			color=color_;
+			shapeAttributes=ShapeAttributeSet({reflection: 0});
+			var setShapeAttributes=function(attrs_){shapeAttributes=attrs_;};
 			var setAxes=function(){
 				if(normal.cross(xu).norm()!=0){
 					xAxis=point.plus(xu).projectOnPlane(point, normal).minus(point).unit();
@@ -632,7 +677,7 @@ var SvgScene=function(){
 				}
 			};
 			var toString=function(){
-				return '<plane reflection="0.5" diffusion="0.5" color="'+color.toString2()+'">'+
+				return '<plane '+shapeAttributes.toString()+'color="'+color.toString2()+'">'+
 				'<point x="'+point.x()+'" y="'+point.y()+'" z="'+point.z()+'"/>'+
 				'<normal x="'+normal.x()+'" y="'+normal.y()+'" z="'+normal.z()+'"/>'+
 				'</plane>';
@@ -676,7 +721,9 @@ var SvgScene=function(){
 				setPointAndNormal: setPointAndNormal,
 				highlightOn: highlightOn,
 				highlightOff: highlightOff,
-				remove: remove
+				remove: remove,
+				shapeAttributes: function(){return shapeAttributes;},
+				setShapeAttributes: setShapeAttributes
 			};
 		};
 		var makePlane=function(point, normal, color){
@@ -707,10 +754,12 @@ var SvgScene=function(){
 		var lightSources=[];
 		var currentNumber=0;
 		var Sphere=function(center_, radius_, color_, toBecomeLightSource){
-			var center, radius, color, gridLineSegments, thisSvg;
+			var center, radius, color, gridLineSegments, thisSvg, shapeAttributes;
 			center=center_;
 			radius=radius_;
 			color=color_;
+			shapeAttributes=ShapeAttributeSet({transparency:0.4, refractionIndex:0.5});
+			var setShapeAttributes=function(attrs_){shapeAttributes=attrs_;};
 			var draw=function(){
 				var toCenter=center.minus(viewPort.viewPoint());
 				var d=toCenter.norm();
@@ -800,7 +849,7 @@ var SvgScene=function(){
 			var toString=(function(){
 				if(!toBecomeLightSource){
 					return function(){
-						var s='<sphere reflection="0.5" diffusion="0.5" color="'+color.toString2()+'" radius="'+radius+'">'+
+						var s='<sphere '+shapeAttributes.toString()+'color="'+color.toString2()+'" radius="'+radius+'">'+
 						'<center x="'+center.x()+'" y="'+center.y()+'" z="'+center.z()+'" />'+
 						'</sphere>';
 						return s;
@@ -852,7 +901,9 @@ var SvgScene=function(){
 				setCenterAndRadius: setCenterAndRadius,
 				highlightOn: highlightOn,
 				highlightOff: highlightOff,
-				remove: remove
+				remove: remove,
+				shapeAttributes: function(){return shapeAttributes;},
+				setShapeAttributes: setShapeAttributes
 			};
 		};
 		var removeSphere=function(sphere){
@@ -933,7 +984,7 @@ var SvgScene=function(){
 			req.open("POST","/", true);
 			req.setRequestHeader("Content-type","application/x-www-form-urlencoded");
 			var s=sceneXml();
-			console.log("sending xml...");
+			console.log(s);
 			req.send(s+"\n");
 		};
 		return {
@@ -1378,7 +1429,7 @@ var SvgScene=function(){
 				return table;
 			};
 
-			svgObject.controls.push(makeButton({left:0,bottom:0},'XML',function(){
+			svgObject.controls.push(makeButton({left:0,bottom:0},'>',function(){
 				Interaction.doSomething();
 			}, function(){},0.75,{width:'15%',height:'10%'}).append(where));
 			var xmlDialog=(function(){
@@ -1426,9 +1477,9 @@ var SvgScene=function(){
 				dropDown=(function(){
 					var dropDown=document.createElement('div');
 					dropDown.setAttribute('style', 'position:absolute;right:0;bottom:10%;padding:0px;display:none');
-					var button1=makeButton(null,'plane',function(){hide();PlaneFactory.makePlane(Point(0,0,0),Point(0,1,0),Color(255,255,255));drawThings();showShapeList(sceneShapeList());}, function(){}, 1, {width:150,height:50}).getNode();
-					var button2=makeButton(null,'sphere',function(){hide();SphereFactory.makeSphere(Point(0,0,0),0.1,Color(255,255,255));drawThings();showShapeList(sceneShapeList());}, function(){}, 1, {width:150,height:50}).getNode();
-					var button3=makeButton(null,'light source',function(){hide();SphereFactory.makeLightSource(Point(0,0,0),0.1,Color(255,255,255));drawThings();showShapeList(sceneShapeList());}, function(){}, 1, {width:150,height:50}).getNode();
+					var button1=makeButton(null,'plane',function(){hide();PlaneFactory.makePlane(Point(0,0,0),Point(0,1,0),Color(255,255,255).setReflectable());drawThings();showShapeList(sceneShapeList());}, function(){}, 1, {width:150,height:50}).getNode();
+					var button2=makeButton(null,'sphere',function(){hide();SphereFactory.makeSphere(Point(0,0,0),0.1,Color(255,255,255).setReflectable());drawThings();showShapeList(sceneShapeList());}, function(){}, 1, {width:150,height:50}).getNode();
+					var button3=makeButton(null,'light source',function(){hide();SphereFactory.makeLightSource(Point(0,0,0),0.1,Color(255,255,255).setReflectable());drawThings();showShapeList(sceneShapeList());}, function(){}, 1, {width:150,height:50}).getNode();
 					dropDown.appendChild(makeTable([[button1],[button2],[button3]]));
 					shapeListDialog.appendChild(dropDown);
 					var hide=function(){dropDown.style.display="none";};
@@ -1458,6 +1509,19 @@ var SvgScene=function(){
 
 			var sceneShapeList=function(){
 				var makeRow={
+					"checkBox": function(name, checked, edit){
+						var box=document.createElement('div');
+						box.setAttribute('height','30px');
+						var onEdit;
+						box.appendChild(makeTable([[(function(){
+							var checkbox=document.createElement('input');
+							checkbox.setAttribute('type','checkbox');
+							if(checked){checkbox.setAttribute('checked', 'true');}
+							onEdit=function(){edit(checkbox.checked);}
+							return checkbox;
+						})(),document.createTextNode(name)]]));
+						return {box:box,onEdit:onEdit};
+					},
 					"valueBox": function(name, value, edit){
 						var box=document.createElement('div');
 						box.setAttribute('style','width:50px');
@@ -1485,11 +1549,12 @@ var SvgScene=function(){
 						var currentcolor=color;
 						var picker=(function(color_,edit){
 							var picker=document.createElement('div');
-							picker.setAttribute('style','position: absolute;left:0;top:0;padding:0px;display:none;background-color:rgb(50,50,50);padding:5px;font-family:inherit;color:#FFFFFF');
+							picker.setAttribute('style','position: absolute;left:0;top:0;display:none;background-color:rgb(50,50,50);padding:5px;font-family:inherit;color:#FFFFFF');
 							var currentcolor=color_;
 							var currentr=currentcolor.r();
 							var currentg=currentcolor.g();
 							var currentb=currentcolor.b();
+							var currentReflectable=currentcolor.isReflectable();
 							var content=(function(){
 								var sample=document.createElement('div');
 								sample.setAttribute('style','width:40px;height:40px;border: 1pt solid #000000;background-color: '+currentcolor.toString());
@@ -1498,14 +1563,17 @@ var SvgScene=function(){
 									rBox.onEdit();
 									gBox.onEdit();
 									bBox.onEdit();
+									refBox.onEdit();
 									currentcolor=Color(currentr, currentg, currentb);
+									currentcolor.setReflectable(currentReflectable);
 									sample.style.backgroundColor=currentcolor.toString();
 									edit(currentcolor);
 								}, function(){}, 1, {width:75,height:30}).getNode();
 								var rBox=self["valueBox"]('r:',currentr,function(r){currentr=r;});
 								var gBox=self["valueBox"]('g:',currentg,function(r){currentg=r;});
 								var bBox=self["valueBox"]('b:',currentb,function(r){currentb=r;});
-								return makeTable([[makeTable([[sample, makeTable([[rBox.box],[gBox.box],[bBox.box]])]])],[button]]);
+								var refBox=self["checkBox"]('reflectable', currentReflectable, function(checked_){currentReflectable=checked_;});
+								return makeTable([[makeTable([[sample, makeTable([[rBox.box],[gBox.box],[bBox.box],[refBox.box]])]])],[button]]);
 							})();
 							picker.appendChild(content);
 							shapeListDialog.append(picker);
@@ -1531,9 +1599,48 @@ var SvgScene=function(){
 						var onEdit=function(){valueBox1.onEdit();valueBox2.onEdit();valueBox3.onEdit();if(edit){edit(nx, ny, nz);}};
 						return {box:box,onEdit:onEdit};
 					},
-					"propertyRow": function(name, node){
+					"shapeAttributesBox": function(attrs, edit){
+						var nattrs=attrs.clone();
+						var box=document.createElement('div');
+						box.setAttribute('style', 'width:150px;color:rgb(180, 180, 180)');
+						var tablearray=[];
+						var names=attrs.getAttrNames();
+						var onEdits=[];
+						var self=this;
+						for(var i=0;i<names.length;i++){
+							tablearray.push([(function(){
+								var a=document.createElement('a');
+								a.setAttribute('style', 'font-style:italic');
+								a.appendChild(document.createTextNode(names[i]));
+								return a;
+							})(),(function(){
+								// var editorFunction=function(v){
+								// 	var obj={};
+								// 	obj[names[i]]=v;
+								// 	nattrs.setAttributes(obj);
+								// };
+								var editorFunction=(function(attrName){
+									return function(v){
+										var obj={};
+										obj[attrName]=v;
+										nattrs.setAttributes(obj);
+									};
+								})(names[i]);
+								var editor=self["valueBox"]('', nattrs.getAttributeByName(names[i]), editorFunction);
+								onEdits.push(editor.onEdit);
+								return editor.box;
+							})()]);
+						}
+						box.appendChild(makeTable(tablearray));
+						var onEdit=function(){
+							for(var i=0;i<onEdits.length;i++){onEdits[i]();}
+							edit(nattrs);
+						};
+						return {box:box, onEdit: onEdit};
+					},
+					"propertyRow": function(name, node, height){
 						var row=document.createElement('div');
-						row.setAttribute('style','height:50px;color:inherit');
+						row.setAttribute('style','height:'+(height?height:50)+'px;color:inherit');
 						var table=makeTable([[document.createTextNode(name),node]]);
 						row.appendChild(table);
 						return row;
@@ -1561,11 +1668,10 @@ var SvgScene=function(){
 					},
 					"plane": function(plane){
 						var content=document.createElement("div");
-						//content.onmouseover=function(){plane.highlightOn();};
-						//content.onmouseleave=function(){plane.highlightOff();};
 						var newpoint=plane.point();
 						var newnormal=plane.normal();
 						var newcolor=plane.color();
+						var newshapeAttributes=plane.shapeAttributes();
 						var pointEditor=this["pointBox"](newpoint.x(), newpoint.y(), newpoint.z(), function(x,y,z){
 							newpoint=Point(x,y,z);
 						});
@@ -1573,40 +1679,51 @@ var SvgScene=function(){
 							newnormal=Point(x,y,z);
 						});
 						var colorEditor=this["colorBox"](newcolor,function(color_){newcolor=color_;});
+						var shapeAttributesEditor=this["shapeAttributesBox"](newshapeAttributes, function(attrs_){newshapeAttributes=attrs_;});
 						content.appendChild(this["propertyRow"]('point: ', pointEditor.box));
 						content.appendChild(this["propertyRow"]('normal:', normalEditor.box));
 						content.appendChild(this["propertyRow"]('color:', colorEditor.box));
-						var onEdit=function(){pointEditor.onEdit();normalEditor.onEdit();colorEditor.onEdit();plane.setPointAndNormal(newpoint, newnormal);plane.setColor(newcolor);};
+						content.appendChild(this["propertyRow"]('shape attributes:', shapeAttributesEditor.box, 120));
+						var onEdit=function(){
+							pointEditor.onEdit();
+							normalEditor.onEdit();
+							colorEditor.onEdit();
+							shapeAttributesEditor.onEdit();
+							plane.setPointAndNormal(newpoint, newnormal);
+							plane.setColor(newcolor);
+							plane.setShapeAttributes(newshapeAttributes);
+						};
 						return {row: this["rowContainer"]("plane",content, function(){plane.highlightOn();}, function(){plane.highlightOff();}, function(){PlaneFactory.removePlane(plane);}),onEdit:onEdit};
 					},
 					"sphere": function(sphere){
 						var content=document.createElement("div");
-						//content.onmouseover=function(){sphere.highlightOn();};
-						//content.onmouseleave=function(){sphere.highlightOff();};
 						var newcenter=sphere.center();
 						var newradius=sphere.radius();
 						var newcolor=sphere.color();
+						var newshapeAttributes=sphere.shapeAttributes();
 						var centerEditor=this["pointBox"](newcenter.x(), newcenter.y(), newcenter.z(), function(x,y,z){
 							newcenter=Point(x,y,z);
 						});
 						var radiusEditor=this["valueBox"]('',newradius, function(r){newradius=r;});
 						var colorEditor=this["colorBox"](newcolor, function(color_){newcolor=color_;});
+						var shapeAttributesEditor=this["shapeAttributesBox"](newshapeAttributes, function(attrs_){newshapeAttributes=attrs_;});
 						content.appendChild(this["propertyRow"]('center: ', centerEditor.box));
 						content.appendChild(this["propertyRow"]('radius: ',radiusEditor.box));
 						content.appendChild(this["propertyRow"]('color:', colorEditor.box));
+						content.appendChild(this["propertyRow"]('shape attributes:', shapeAttributesEditor.box, 120));
 						var onEdit=function(){
 							centerEditor.onEdit();
 							radiusEditor.onEdit();
 							colorEditor.onEdit();
-							sphere.setCenterAndRadius(newcenter, newradius);sphere.setColor(newcolor);
+							shapeAttributesEditor.onEdit();
+							sphere.setCenterAndRadius(newcenter, newradius);
+							sphere.setColor(newcolor);
+							sphere.setShapeAttributes(newshapeAttributes);
 						};
 						return {row: this["rowContainer"]("sphere",content, function(){sphere.highlightOn();}, function(){sphere.highlightOff();}, function(){SphereFactory.removeSphere(sphere);}), onEdit:onEdit};
-						//return this["rowContainer"]("sphere",content);
 					},
 					"lightsource": function(lightSource){
 						var content=document.createElement("div");
-						//content.onmouseover=function(){lightSource.highlightOn();};
-						//content.onmouseleave=function(){lightSource.highlightOff();};
 						var newcenter=lightSource.center();
 						var newradius=lightSource.radius();
 						var newcolor=lightSource.color();
@@ -1620,7 +1737,6 @@ var SvgScene=function(){
 						content.appendChild(this["propertyRow"]('color:', colorEditor.box));
 						var onEdit=function(){centerEditor.onEdit();radiusEditor.onEdit();colorEditor.onEdit();lightSource.setCenterAndRadius(newcenter, newradius);lightSource.setColor(newcolor);};
 						return {row: this["rowContainer"]("light source",content, function(){lightSource.highlightOn();}, function(){lightSource.highlightOff();}, function(){SphereFactory.removeLightSource(lightSource);}), onEdit:onEdit};
-						//return this["rowContainer"]("light source",content);
 					}
 				};
 				var rows=[];
@@ -1666,6 +1782,7 @@ var SvgScene=function(){
 					var s1=string;
 					jsonDialog.style.display="initial";
 					text.value=s1;
+					text.select();
 				};
 				var hideFrom=function(where_){where_.removeChild(jsonDialog);};
 				return {dialog: jsonDialog,text: text,showJson:showJson,hideFrom:hideFrom};
@@ -1874,7 +1991,7 @@ var SvgScene=function(){
 			whereSvg.onload=function(){
 				var makeColor=function(arr){
 					var c=Color(arr[0], arr[1], arr[2]);
-					if(arr.length==4&&arr[3]){c.setReflectable();}
+					if(arr.length==4&&arr[3]){c.setReflectable(true);}
 					return c;
 				};
 				var makePoint=function(arr){
@@ -1938,7 +2055,8 @@ var SvgScene=function(){
 		hideControls: function(){
 			svg.hideControls();
 			delete sc.hideControls;
-		}
+		},
+		go: function(){Interaction.doSomething();}
 	};
 	return sc;
 };
@@ -1947,18 +2065,18 @@ var SvgScene=function(){
 var scene1=new SvgScene();
 scene1.init(document.getElementById("viewPort"), {
 viewport: {
-lefttop: [0.3978787922027179,0.43736805482170893,0.0645603555028515],
-leftaxis: [-0.31774474216815707,-0.09635129488389366,-0.2960514920710795],
-topaxis: [0.18288977321126815,-0.25520651013691087,-0.11323295783852266],
-viewpoint: [0.5341203035577721,0.5455354138389102,-0.4510863568817325]
+lefttop: [0.10138850409968453,0.2135963133231425,0.49539122574831895],
+leftaxis: [0.33840946079600165,0.0027699168239234684,-0.3822937600232745],
+topaxis: [0.12853194615345173,-0.40477133013372585,0.11084471709161903],
+viewpoint: [0.5736525153239421,0.1465742608077697,0.5720191743840661]
 },
 shapes: [
-{type: "plane", point: [0,-1,0], normal: [0,1,0], color: [100,100,100]},
-{type: "lightsource", center: [0,2,0], radius: 0.3, color: [100,100,0]},
-{type: "lightsource", center: [-0.5,0.25,-0.5], radius: 0.1, color: [100,100,0]},
-{type: "sphere", center: [0,0,0], radius: 0.1, color: [150,0,0]},
-{type: "sphere", center: [0.25,0,0], radius: 0.1, color: [0,0,100]},
-{type: "sphere", center: [0,0,0.25], radius: 0.1, color: [0,100,0]}
+{type: "plane", point: [0,-0.1,0], normal: [0,1,0], color: [100,100,100, true]},
+{type: "lightsource", center: [0,2,0], radius: 0.75, color: [100,100,0, true]},
+{type: "lightsource", center: [-0.5,0.25,-0.5], radius: 0.1, color: [100,100,0, true]},
+{type: "sphere", center: [0,0,0], radius: 0.1, color: [100,0,0, true]},
+{type: "sphere", center: [0.25,0,0], radius: 0.1, color: [0,0,100, true]},
+{type: "sphere", center: [0,0,0.25], radius: 0.1, color: [0,100,0, true]}
 ]
 });
 

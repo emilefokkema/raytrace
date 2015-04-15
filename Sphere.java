@@ -100,6 +100,7 @@ abstract class Shape{
 		return r;
 	}
     public Point refract(Point p, Point direction){
+    	//return direction;
         double dot=direction.unit().dot(normal(p));
         if(fromOutside(p, direction)){
             double angle=Math.acos(-dot);

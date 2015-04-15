@@ -22,6 +22,10 @@ public class SceneXml {
 		String att;
 		if(!(att=e.getAttribute("reflection")).equals("")){s.setReflection(Double.parseDouble(att));}
 		if(!(att=e.getAttribute("diffusion")).equals("")){s.setDiffusion(Double.parseDouble(att));}
+		if(!(att=e.getAttribute("shininess")).equals("")){s.setShininess(Double.parseDouble(att));}
+		if(!(att=e.getAttribute("transparency")).equals("")){s.setTransparency(Double.parseDouble(att));}
+		if(!(att=e.getAttribute("refractionIndex")).equals("")){s.setRefractionIndex(Double.parseDouble(att));}
+		if(!(att=e.getAttribute("roughness")).equals("")){s.setRoughness(Double.parseDouble(att));}
 		//s.setDiffusion(0.4);
 		return s;
 	}

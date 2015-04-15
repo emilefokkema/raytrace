@@ -55,6 +55,10 @@
 	<xs:attributeGroup name="shapeAttributes">
 		<xs:attribute name="reflection" type="xs:decimal" use="optional" />
 		<xs:attribute name="diffusion" type="xs:decimal" use="optional" />
+		<xs:attribute name="shininess" type="xs:decimal" use="optional" />
+		<xs:attribute name="transparency" type="xs:decimal" use="optional" />
+		<xs:attribute name="refractionIndex" type="xs:decimal" use="optional" />
+		<xs:attribute name="roughness" type="xs:decimal" use="optional" />
 		<xs:attribute name="color" type="colorString" use="required" />
 	</xs:attributeGroup>
 	
