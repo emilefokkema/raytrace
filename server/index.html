@@ -84,8 +84,6 @@ var SvgScene=function(){
 		};
 	};
 
-	console.log(ShapeAttributeSet().toString());
-
 	var threeD=(function(){
 		var Point=function(x_, y_, z_){
 			var x=x_;
@@ -1534,24 +1532,39 @@ var SvgScene=function(){
 						return {box:box,onEdit:onEdit};
 					},
 					"valueBox": function(name, value, edit){
+						var currentValue=value;
 						var box=document.createElement('div');
-						box.setAttribute('style','width:50px');
-						box.appendChild(document.createTextNode(name+value));
-						var isEditable=false;
+						box.setAttribute('style','width:70px');
+						var shorten=function(v){
+							var vs=v.toString();
+							if(vs.length>7){vs=vs.substring(0,4)+'...';}
+							return vs;
+						};
+						var isEditable;
+						var makeNonEditable=function(){
+							box.innerHTML='';
+							box.appendChild(document.createTextNode(name+shorten(currentValue)));
+							isEditable=false;
+						};
 						var onEdit;
+						var focus;
 						var editable=makeTable([[document.createTextNode(name),(function(){
 							var textbox=document.createElement('input');
 							textbox.setAttribute('type','text');
 							textbox.setAttribute('style','width:40px');
-							textbox.setAttribute('value',value);
+							textbox.setAttribute('value',currentValue);
 							onEdit=function(){edit(parseFloat(textbox.value));};
+							focus=function(){textbox.focus();};
+							textbox.onblur=function(){currentValue=parseFloat(textbox.value);makeNonEditable();};
 							return textbox;
 						})()]]);
 						box.onclick=function(){
 							if(!isEditable){
 								box.innerHTML='';box.appendChild(editable);isEditable=true;
+								focus();
 							}
 						};
+						makeNonEditable();
 						return {box:box,onEdit:onEdit};
 					},
 					"colorBox": function(color,edit){
