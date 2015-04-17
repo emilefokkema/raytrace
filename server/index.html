@@ -822,16 +822,18 @@ var SvgScene=function(){
 			var pointWithCoords=function(lo, la){
 				return center.plus(xu.rotate(or, 2, la).rotate(or, 1, lo).scale(radius));
 			};
+			var gridAngle=Math.PI/8;
+			var circleParts=20;
 			var getPairwiseGridPoints=function(){
 				var gp=[];
-				for(var lo=-Math.PI;lo<=Math.PI;lo+=Math.PI/8){
-					var pointsOnMeridian_=pointsOnMeridian(lo,20);
+				for(var lo=-Math.PI;lo<=Math.PI;lo+=gridAngle){
+					var pointsOnMeridian_=pointsOnMeridian(lo,circleParts);
 					for(var i=1;i<pointsOnMeridian_.length;i++){
 						gp.push([pointsOnMeridian_[i-1], pointsOnMeridian_[i]]);
 					}
 				}
-				for(var la=-Math.PI/2;la<=Math.PI/2;la+=Math.PI/8){
-					var pointsOnLatitude_=pointsOnLatitude(la, 20);
+				for(var la=-Math.PI/2;la<=Math.PI/2;la+=gridAngle){
+					var pointsOnLatitude_=pointsOnLatitude(la, circleParts);
 					for(var i=1;i<pointsOnLatitude_.length;i++){
 						gp.push([pointsOnLatitude_[i-1], pointsOnLatitude_[i]]);
 					}
@@ -840,7 +842,7 @@ var SvgScene=function(){
 			};
 			var pointsOnMeridian=function(lo, n){
 				var pointsOnMeridian_=[];
-				for(var la=-Math.PI/2; la<=Math.PI/2; la+=Math.PI/n){
+				for(var la=-Math.PI/2; la<=Math.PI/2; la+=2*Math.PI/n){
 					pointsOnMeridian_[pointsOnMeridian_.length]=pointWithCoords(lo,la);
 				}
 				return pointsOnMeridian_;
@@ -1581,14 +1583,27 @@ var SvgScene=function(){
 						var currentAround=or;
 						var currentAxis=0;
 						var currentAngle=0;
-						var picker=(function(around, axis, angle){
+						var self=this;
+						var picker=(function(){
 							var picker=document.createElement('div');
 							picker.setAttribute('style','position:absolute;left:0;top:0;background-color:rgb(50,50,50);padding:5px;font-family:inherit;color:#FFFFFF');
-							picker.appendChild(makeButton(null, 'OK',function(){onEdit();}, function(){}, 1, {width:75,height:30}).getNode());
+							//picker.appendChild(makeButton(null, 'OK',function(){onEdit();}, function(){}, 1, {width:75,height:30}).getNode());
+							picker.appendChild((function(){
+								var button=makeButton(null, 'OK',function(){aroundEditor.onEdit();axisEditor.onEdit();angleEditor.onEdit();onEdit();}, function(){}, 1, {width:75,height:30}).getNode();
+								var aroundEditor=self["pointBox"](currentAround.x(), currentAround.y(), currentAround.z(), function(x,y,z){currentAround=Point(x,y,z);});
+								var axisEditor=self["valueBox"]('', currentAxis, function(v){if(v==0||v==1||v==2){currentAxis=v;}});
+								var angleEditor=self["valueBox"]('', currentAngle, function(v){currentAngle=v*Math.PI/180;});
+								return makeTable([
+									[self["propertyRow"]('around: ', aroundEditor.box)],
+									[self["propertyRow"]('axis (0..2): ', axisEditor.box)],
+									[self["propertyRow"]('angle (deg):', angleEditor.box)],
+									[button]
+									]);
+							})());
 							var show=function(){shapeListDialog.append(picker);};
 							var remove=function(){shapeListDialog.remove(picker);};
 							return {show:show,remove:remove};
-						})(currentAround, currentAxis, currentAngle);
+						})();
 						onEdit=function(){edit(currentAround, currentAxis, currentAngle);};
 						var show=function(){box.style.visibility="";};
 						var hide=function(){box.style.visibility="hidden";};
@@ -1641,14 +1656,17 @@ var SvgScene=function(){
 						var onEdit=function(){picker.remove();if(edit){edit(currentcolor);}};
 						return {box:box,onEdit:onEdit};
 					},
-					"pointBox": function(x,y,z,edit){
+					"pointBox": function(x,y,z,edit,rotatable){
 						var nx=x,ny=y,nz=z;
 						var box=document.createElement('div');
 						//box.setAttribute('style','border: 1pt solid rgb(150,150,150)');
 						var valueBox1=this["valueBox"]('x: ', x, function(v){nx=v;});
 						var valueBox2=this["valueBox"]('y: ', y, function(v){ny=v;});
 						var valueBox3=this["valueBox"]('z: ', z, function(v){nz=v;});
-						var rotator=this["rotationBox"](function(around, axis, angle){
+						var rotator=rotatable?this["rotationBox"](function(around, axis, angle){
+							valueBox1.onEdit();
+							valueBox2.onEdit();
+							valueBox3.onEdit();
 							var np=Point(nx, ny, nz).rotate(around, axis, angle);
 							nx=np.x();
 							ny=np.y();
@@ -1671,11 +1689,13 @@ var SvgScene=function(){
 							valueBox3.setShy(false);
 							valueBox3.makeEditable();
 							rotator.showPicker();
-						});
-						var table=makeTable([[valueBox1.box,valueBox2.box,valueBox3.box, rotator.box]]);
+						}):null;
+						var table=rotatable?makeTable([[valueBox1.box,valueBox2.box,valueBox3.box, rotator.box]]):makeTable([[valueBox1.box,valueBox2.box,valueBox3.box]]);
 						box.appendChild(table);
-						box.onmouseover=rotator.show;
-						box.onmouseleave=rotator.hide;
+						if(rotatable){
+							box.onmouseover=rotator.show;
+							box.onmouseleave=rotator.hide;
+						}
 						var onEdit=function(){valueBox1.onEdit();valueBox2.onEdit();valueBox3.onEdit();if(edit){edit(nx, ny, nz);}};
 						return {box:box,onEdit:onEdit};
 					},
@@ -1754,10 +1774,10 @@ var SvgScene=function(){
 						var newshapeAttributes=plane.shapeAttributes();
 						var pointEditor=this["pointBox"](newpoint.x(), newpoint.y(), newpoint.z(), function(x,y,z){
 							newpoint=Point(x,y,z);
-						});
+						}, true);
 						var normalEditor=this["pointBox"](newnormal.x(), newnormal.y(), newnormal.z(), function(x,y,z){
 							newnormal=Point(x,y,z);
-						});
+						}, true);
 						var colorEditor=this["colorBox"](newcolor,function(color_){newcolor=color_;});
 						var shapeAttributesEditor=this["shapeAttributesBox"](newshapeAttributes, function(attrs_){newshapeAttributes=attrs_;});
 						content.appendChild(this["propertyRow"]('point: ', pointEditor.box));
@@ -1783,7 +1803,7 @@ var SvgScene=function(){
 						var newshapeAttributes=sphere.shapeAttributes();
 						var centerEditor=this["pointBox"](newcenter.x(), newcenter.y(), newcenter.z(), function(x,y,z){
 							newcenter=Point(x,y,z);
-						});
+						}, true);
 						var radiusEditor=this["valueBox"]('',newradius, function(r){newradius=r;});
 						var colorEditor=this["colorBox"](newcolor, function(color_){newcolor=color_;});
 						var shapeAttributesEditor=this["shapeAttributesBox"](newshapeAttributes, function(attrs_){newshapeAttributes=attrs_;});
@@ -1809,7 +1829,7 @@ var SvgScene=function(){
 						var newcolor=lightSource.color();
 						var centerEditor=this["pointBox"](newcenter.x(), newcenter.y(), newcenter.z(), function(x,y,z){
 							newcenter=Point(x,y,z);
-						});
+						}, true);
 						var radiusEditor=this["valueBox"]('',newradius, function(r){newradius=r;});
 						var colorEditor=this["colorBox"](newcolor, function(color_){newcolor=color_;});
 						content.appendChild(this["propertyRow"]('location: ', centerEditor.box));
