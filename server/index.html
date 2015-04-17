@@ -679,6 +679,7 @@ var SvgScene=function(){
 			};
 			var setPointAndNormal=function(point_, normal_){
 				if(!point_.equals(point)||!normal_.equals(normal)){
+					if(normal_.norm()==0){alert("A plane with normal (0,0,0)? Let's not.");return;}
 					console.log("[plane] setting point "+point_.toString()+" and normal "+normal_.toString()+"!");
 					point=point_;
 					normal=normal_;
@@ -1478,17 +1479,18 @@ var SvgScene=function(){
 				var dropDown;
 				shapeListDialog.setAttribute('style', 'position:absolute;left:0;top:0;background-color: rgb(50,50,50);padding:0px;width:40%;height:90%;display:none;font-family:Arial;opacity:0.75');
 				var button=makeButton(null,'DONE',function(){dropDown.hide();shapeListDialog.style.display='none';onEdit();}, function(){}, 1, {width:100,height:50}).getNode();
+				var button3=makeButton(null, 'CANCEL', function(){dropDown.hide();shapeListDialog.style.display='none';}, function(){}, 1, {width:100,height:50}).getNode();
 				var button2=makeButton(null,'+',function(){dropDown.show();}, function(){}, 1, {width:100,height:50}).getNode();
 				var text=document.createElement('div');
 				text.setAttribute('style','width:100%;height:100%;overflow:scroll;padding:0px;margin:0px');
-				var table=makeTable([[text],[makeTable([[button,button2]])]],['90%','10%']);
+				var table=makeTable([[text],[makeTable([[button,button3,button2]])]],['90%','10%']);
 				shapeListDialog.appendChild(table);
 				dropDown=(function(){
 					var dropDown=document.createElement('div');
 					dropDown.setAttribute('style', 'position:absolute;right:0;bottom:10%;padding:0px;display:none');
-					var button1=makeButton(null,'plane',function(){hide();PlaneFactory.makePlane(Point(0,0,0),Point(0,1,0),Color(255,255,255).setReflectable());drawThings();showShapeList(sceneShapeList());}, function(){}, 1, {width:150,height:50}).getNode();
-					var button2=makeButton(null,'sphere',function(){hide();SphereFactory.makeSphere(Point(0,0,0),0.1,Color(255,255,255).setReflectable());drawThings();showShapeList(sceneShapeList());}, function(){}, 1, {width:150,height:50}).getNode();
-					var button3=makeButton(null,'light source',function(){hide();SphereFactory.makeLightSource(Point(0,0,0),0.1,Color(255,255,255).setReflectable());drawThings();showShapeList(sceneShapeList());}, function(){}, 1, {width:150,height:50}).getNode();
+					var button1=makeButton(null,'plane',function(){hide();PlaneFactory.makePlane(Point(0,0,0),Point(0,1,0),Color(255,255,255).setReflectable(true));drawThings();showShapeList(sceneShapeList());}, function(){}, 1, {width:150,height:50}).getNode();
+					var button2=makeButton(null,'sphere',function(){hide();SphereFactory.makeSphere(Point(0,0,0),0.1,Color(255,255,255).setReflectable(true));drawThings();showShapeList(sceneShapeList());}, function(){}, 1, {width:150,height:50}).getNode();
+					var button3=makeButton(null,'light source',function(){hide();SphereFactory.makeLightSource(Point(0,0,0),0.1,Color(255,255,255).setReflectable(true));drawThings();showShapeList(sceneShapeList());}, function(){}, 1, {width:150,height:50}).getNode();
 					dropDown.appendChild(makeTable([[button1],[button2],[button3]]));
 					shapeListDialog.appendChild(dropDown);
 					var hide=function(){dropDown.style.display="none";};
@@ -1541,11 +1543,20 @@ var SvgScene=function(){
 							return vs;
 						};
 						var isEditable;
+						var isShy=true;
 						var makeNonEditable=function(){
 							box.innerHTML='';
 							box.appendChild(document.createTextNode(name+shorten(currentValue)));
 							isEditable=false;
 						};
+						var makeEditable=function(){
+							if(!isEditable){
+								box.innerHTML='';box.appendChild(editable);isEditable=true;
+								focus();
+							}
+						};
+						var setValue;
+						var setShy=function(b){isShy=b;};
 						var onEdit;
 						var focus;
 						var editable=makeTable([[document.createTextNode(name),(function(){
@@ -1553,19 +1564,38 @@ var SvgScene=function(){
 							textbox.setAttribute('type','text');
 							textbox.setAttribute('style','width:40px');
 							textbox.setAttribute('value',currentValue);
+							setValue=function(v){textbox.value=v;currentValue=v;};
 							onEdit=function(){edit(parseFloat(textbox.value));};
 							focus=function(){textbox.focus();};
-							textbox.onblur=function(){currentValue=parseFloat(textbox.value);makeNonEditable();};
+							textbox.onblur=function(){currentValue=parseFloat(textbox.value);if(isShy){makeNonEditable();}};
 							return textbox;
 						})()]]);
-						box.onclick=function(){
-							if(!isEditable){
-								box.innerHTML='';box.appendChild(editable);isEditable=true;
-								focus();
-							}
-						};
+						box.onclick=makeEditable;
 						makeNonEditable();
-						return {box:box,onEdit:onEdit};
+						return {box:box,onEdit:onEdit, makeEditable:makeEditable, makeNonEditable: makeNonEditable, setShy:setShy, setValue:setValue};
+					},
+					"rotationBox": function(edit){
+						var box=document.createElement('div');
+						box.setAttribute('style', 'width:20px;height:20px;background-color:rgb(175, 175, 175);visibility:hidden');
+						var onEdit;
+						var currentAround=or;
+						var currentAxis=0;
+						var currentAngle=0;
+						var picker=(function(around, axis, angle){
+							var picker=document.createElement('div');
+							picker.setAttribute('style','position:absolute;left:0;top:0;background-color:rgb(50,50,50);padding:5px;font-family:inherit;color:#FFFFFF');
+							picker.appendChild(makeButton(null, 'OK',function(){onEdit();}, function(){}, 1, {width:75,height:30}).getNode());
+							var show=function(){shapeListDialog.append(picker);};
+							var remove=function(){shapeListDialog.remove(picker);};
+							return {show:show,remove:remove};
+						})(currentAround, currentAxis, currentAngle);
+						onEdit=function(){edit(currentAround, currentAxis, currentAngle);};
+						var show=function(){box.style.visibility="";};
+						var hide=function(){box.style.visibility="hidden";};
+						var setOnclick=function(h){box.onclick=h;};
+						var showPicker=function(){picker.show();};
+						var hidePicker=function(){picker.remove()};
+						return {box:box,onEdit:onEdit,show:show,hide:hide,setOnclick:function(h){setOnclick(h);return this;}, showPicker:showPicker, hidePicker:hidePicker};
 					},
 					"colorBox": function(color,edit){
 						var self=this;
@@ -1618,8 +1648,34 @@ var SvgScene=function(){
 						var valueBox1=this["valueBox"]('x: ', x, function(v){nx=v;});
 						var valueBox2=this["valueBox"]('y: ', y, function(v){ny=v;});
 						var valueBox3=this["valueBox"]('z: ', z, function(v){nz=v;});
-						var table=makeTable([[valueBox1.box,valueBox2.box,valueBox3.box]]);
+						var rotator=this["rotationBox"](function(around, axis, angle){
+							var np=Point(nx, ny, nz).rotate(around, axis, angle);
+							nx=np.x();
+							ny=np.y();
+							nz=np.z();
+							valueBox1.setValue(nx);
+							valueBox2.setValue(ny);
+							valueBox3.setValue(nz);
+							valueBox1.makeNonEditable();
+							valueBox1.setShy(true);
+							valueBox2.makeNonEditable();
+							valueBox2.setShy(true);
+							valueBox3.makeNonEditable();
+							valueBox3.setShy(true);
+							rotator.hidePicker();
+						}).setOnclick(function(){
+							valueBox1.setShy(false);
+							valueBox1.makeEditable();
+							valueBox2.setShy(false);
+							valueBox2.makeEditable();
+							valueBox3.setShy(false);
+							valueBox3.makeEditable();
+							rotator.showPicker();
+						});
+						var table=makeTable([[valueBox1.box,valueBox2.box,valueBox3.box, rotator.box]]);
 						box.appendChild(table);
+						box.onmouseover=rotator.show;
+						box.onmouseleave=rotator.hide;
 						var onEdit=function(){valueBox1.onEdit();valueBox2.onEdit();valueBox3.onEdit();if(edit){edit(nx, ny, nz);}};
 						return {box:box,onEdit:onEdit};
 					},
@@ -2138,9 +2194,9 @@ scene1.init(document.getElementById("viewPort"),
         0
       ],
       color: [
-        0,
-        0,
-        0,
+        40,
+        40,
+        40,
         true
       ],
       shapeAttributes: {
