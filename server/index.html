@@ -10,6 +10,13 @@
 
 <script language="JavaScript">
 var SvgScene=function(){
+	var Images={
+		"pencil": '<svg width="40" height="40" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg"><g><g stroke="null" id="layer1"><g stroke="#FFFFFF" id="svg_1" fill="none"><path stroke="null" stroke-width="2" d="m10.13272,24.78455l17.69503,-17.69458l5.08626,5.0863l-17.69456,17.69501l-6.12544,1.0387l1.03872,-6.12543l-0.00001,0z" id="rect2990"/><path stroke="null" stroke-width="2" d="m10.15659,24.56989l5.22951,5.22948" id="path3771"/><path stroke="null" stroke-width="2" d="m30.05628,9.93994l-17.33666,17.33618" id="path3777"/><path stroke="null" stroke-width="2" d="m9.38373,28.79895l1.93725,1.86975" id="path3763"/></g></g></g></svg>',
+		"trashcan": '<svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg"><g><title>Layer 1</title><g stroke="null" id="trashcan"><path fill="#ffffff" stroke="null" id="svg_1" d="m13.77909,4.9061l-2.39124,0c0.00052,-0.01666 0.00263,-0.03331 0.00263,-0.05058l0,-0.48884c0,-0.88933 -0.71697,-1.61769 -1.5923,-1.61769l-2.65412,0c-0.87596,0 -1.5923,0.72832 -1.5923,1.61769l0,0.48884c0,0.01727 0.00199,0.03396 0.00256,0.05058l-2.39117,0c-0.43792,0 -0.79615,0.36423 -0.79615,0.80892l0,0.80872c0,0.44515 0.35819,0.80938 0.79615,0.80938l0.26551,0l0,-0.53961l10.08482,0l0,0.53961l0.26559,0c0.43766,0 0.79592,-0.36423 0.79592,-0.80938l0,-0.80872c0.00004,-0.44469 -0.35825,-0.80892 -0.79588,-0.80892l-0.00002,0zm-6.90851,-0.80873l3.18456,0l0,0.80873l-3.18456,0l0,-0.80873z"/><path fill="#ffffff" stroke="null" id="svg_2" d="m3.95952,7.60277l0,8.08885c0,0.44534 0.35804,0.80938 0.7963,0.80938l7.43062,0c0.43801,0 0.7963,-0.36404 0.7963,-0.80938l0,-8.08885l-9.02323,0l0.00001,0zm2.65381,7.14528c0,0.14852 -0.11955,0.26966 -0.26524,0.26966l-0.53075,0c-0.14629,0 -0.26551,-0.12114 -0.26551,-0.26966l0,-5.39281c0,-0.14799 0.11925,-0.26977 0.26551,-0.26977l0.53075,0c0.14569,0 0.26524,0.12178 0.26524,0.26977l0,5.39281zm2.38858,0c0,0.14852 -0.1199,0.26966 -0.26525,0.26966l-0.53105,0c-0.14599,0 -0.26525,-0.12114 -0.26525,-0.26966l0,-5.39281c0,-0.14799 0.11926,-0.26977 0.26525,-0.26977l0.53105,0c0.14531,0 0.26525,0.12178 0.26525,0.26977l0,5.39281zm2.3886,0c0,0.14852 -0.11989,0.26966 -0.26551,0.26966l-0.53076,0c-0.14606,0 -0.26524,-0.12114 -0.26524,-0.26966l0,-5.39281c0,-0.14799 0.11918,-0.26977 0.26524,-0.26977l0.53076,0c0.14561,0 0.26551,0.12178 0.26551,0.26977l0,5.39281z"/></g></g></svg>',
+		"cloneStamp": '<svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg"><g><title>Layer 1</title><g stroke="null" id="svg_1"><path fill="#ffffff" stroke="null" d="m17.4787,12.87671l-5.27603,0c-0.47429,-1.57969 1.34658,-4.95068 1.34658,-4.95068l-0.00057,0c0.30968,-0.57067 0.48617,-1.22589 0.48617,-1.92285c0.00057,-2.21091 -1.77126,-4.00319 -3.957,-4.00319s-3.95748,1.79228 -3.95748,4.00343c0,0.69696 0.17676,1.3519 0.48634,1.92283l-0.00057,0c0,0 1.8208,3.37071 1.34675,4.95088l-5.27587,0l0,3.27079l14.802,0l0,-3.27121l-0.00031,0l0,-0.00001z" id="svg_2"/><rect fill="#ffffff" stroke="null" x="3.66108" y="16.65824" width="12.83365" height="0.74675" id="svg_3"/></g></g></svg>'
+
+	};
+
 	var Color=function(r_, g_, b_){
 		var r=r_;
 		var g=g_;
@@ -34,7 +41,8 @@ var SvgScene=function(){
 			plus: function(color){
 				return Color(r+color.r(),g+color.g(),b+color.b());
 			},
-			scale: function(r_){return Color(r*r_,g*r_,b*r_);}
+			scale: function(r_){return Color(r*r_,g*r_,b*r_);},
+			clone: function(){return Color(r, g, b).setReflectable(reflectable);}
 		};
 	};
 
@@ -299,16 +307,23 @@ var SvgScene=function(){
 	})();
 
 	var viewPort=(function(){
-		var w,h,normal;
+		var w,h,normal, leftAxis, topAxis, leftAxisNorm, topAxisNorm, lu, tu, ndvpmlt; //last one meaning normal.dot(viewPoint.minus(leftTop))
+		var setLeftAxis=function(la){leftAxis=la;leftAxisNorm=la.norm();setLu();};
+		var setTopAxis=function(ta){topAxis=ta;topAxisNorm=ta.norm();setTu();};
+		var setLu=function(){lu=leftAxis.unit();};
+		var setTu=function(){tu=topAxis.unit();};
+		var setNdvpmlt=function(){ndvpmlt=normal.dot(viewPoint.minus(leftTop));};
 		var leftTop=Point(1, 1, -1);
-		var leftAxis=Point(-1,0,0);
-		var topAxis=Point(0,-1,0);
+		setLeftAxis(Point(-1,0,0));
+		setTopAxis(Point(0,-1,0));
 		var viewPoint=Point(0,0,-2);
 		var setSize=function(){
 			var r=h/w;
 			leftTop=Point(0.5, 0.5*r,-1);
-			topAxis=topAxis.scale(r);
+			setLeftAxis(leftAxis);
+			setTopAxis(topAxis.scale(r));
 			normal=leftAxis.cross(topAxis);
+			setNdvpmlt();
 		};
 		var setScale=function(r){
 			leftAxis=leftAxis.scale(r);
@@ -316,12 +331,13 @@ var SvgScene=function(){
 		};
 		var setUp=function(leftTop_, leftAxis_, topAxis_, viewPoint_){
 			leftTop=leftTop_;
-			leftAxis=leftAxis_;
-			topAxis=topAxis_.unit().scale(leftAxis_.norm()*h/w);
+			setLeftAxis(leftAxis_);
+			setTopAxis(topAxis_.unit().scale(leftAxis_.norm()*h/w));
 			normal=leftAxis.cross(topAxis);
 			viewPoint=viewPoint_;
 			var middle=leftTop.plus(leftAxis.plus(topAxis).scale(0.5));
 			viewPoint=middle.plus(viewPoint.minus(middle).minus(viewPoint.minus(middle).projectOnPlane(or, normal)));
+			setNdvpmlt();
 			turnToCenter();
 		};
 		var turnToCenter=function(){
@@ -366,50 +382,66 @@ var SvgScene=function(){
 			}
 		};
 		var lt=function(point){
-			var line=Line(viewPoint, point);
-			if(line.baseVector().perpendicularTo(normal)){return null;}
-			var t=-normal.dot(viewPoint.minus(leftTop))/normal.dot(line.baseVector());
+			var lb=point.minus(viewPoint);
+			if(lb.perpendicularTo(normal)){return null;}
+			var t=-ndvpmlt/normal.dot(lb);
 			if(t<0){return null;}
-			var inPlane=viewPoint.plus(line.baseVector().scale(t));
-			var leftTopToInPlane=inPlane.minus(leftTop);
-			var l=leftAxis.unit().dot(leftTopToInPlane)/leftAxis.norm();
-			var t=topAxis.unit().dot(leftTopToInPlane)/topAxis.norm();
+			var leftTopToInPlane=viewPoint.plus(lb.scale(t)).minus(leftTop);
+			var l=lu.dot(leftTopToInPlane)/leftAxisNorm;
+			var t=tu.dot(leftTopToInPlane)/topAxisNorm;
 			return {left: l*w,top: t*h};
 		};
-		var rotateWithOtherRotation=function(r){
-			leftAxis=leftTop.plus(leftAxis);
-			topAxis=leftTop.plus(topAxis);
+		// var rotateWithOtherRotation=function(r){
+		// 	leftAxis=leftTop.plus(leftAxis);
+		// 	topAxis=leftTop.plus(topAxis);
+		// 	leftTop=leftTop.rotateWithOtherRotation(r);
+		// 	leftAxis=leftAxis.rotateWithOtherRotation(r).minus(leftTop);
+		// 	topAxis=topAxis.rotateWithOtherRotation(r).minus(leftTop);
+		// 	viewPoint=viewPoint.rotateWithOtherRotation(r);
+		// 	normal=leftAxis.cross(topAxis);
+		// 	setLu();
+		// 	setTu();
+		// };
+		var rotateWithOtherRotation=function(around, axis, angle){
+			var r=OtherRotation(around, axis, angle);
+			var r2=OtherRotation(or, axis, angle);
+			//leftAxis=leftTop.plus(leftAxis);
+			//topAxis=leftTop.plus(topAxis);
 			leftTop=leftTop.rotateWithOtherRotation(r);
-			leftAxis=leftAxis.rotateWithOtherRotation(r).minus(leftTop);
-			topAxis=topAxis.rotateWithOtherRotation(r).minus(leftTop);
+			leftAxis=leftAxis.rotateWithOtherRotation(r2);
+			topAxis=topAxis.rotateWithOtherRotation(r2);
 			viewPoint=viewPoint.rotateWithOtherRotation(r);
 			normal=leftAxis.cross(topAxis);
+			setLu();
+			setTu();
 		};
 		var rotX=function(angle){
-			rotateWithOtherRotation(OtherRotation(or, leftAxis, angle));
+			rotateWithOtherRotation(or, leftAxis, angle);
 		};
 		var rotY=function(angle){
-			rotateWithOtherRotation(OtherRotation(or, topAxis, angle));
+			rotateWithOtherRotation(or, topAxis, angle);
 		};
 		var rotZ=function(angle){
-			rotateWithOtherRotation(OtherRotation(or, leftAxis.cross(topAxis), angle));
+			rotateWithOtherRotation(or, leftAxis.cross(topAxis), angle);
 		};
 		var rot2X=function(angle){
-			rotateWithOtherRotation(OtherRotation(viewPoint, leftAxis, angle));
+			rotateWithOtherRotation(viewPoint, leftAxis, angle);
 		};
 		var rot2Y=function(angle){
-			rotateWithOtherRotation(OtherRotation(viewPoint, topAxis, angle));
+			rotateWithOtherRotation(viewPoint, topAxis, angle);
 		};
 		var scale=function(r){
 			leftTop=leftTop.scale(r);
-			leftAxis=leftAxis.scale(r);
-			topAxis=topAxis.scale(r);
+			setLeftAxis(leftAxis.scale(r));
+			setTopAxis(topAxis.scale(r));
 			viewPoint=viewPoint.scale(r);
 			normal=leftAxis.cross(topAxis);
+			setNdvpmlt();
 		};
 		var scale2=function(r){
 			var middleOfView=leftTop.plus(leftAxis.plus(topAxis).scale(0.5));
 			viewPoint=middleOfView.plus(viewPoint.minus(middleOfView).scale(r));
+			setNdvpmlt();
 		};
 		var toString=function(){
 			var s='<viewport w="'+w+'" h="'+h+'">';
@@ -734,7 +766,7 @@ var SvgScene=function(){
 				highlightOff: highlightOff,
 				remove: remove,
 				shapeAttributes: function(){return shapeAttributes;},
-				setShapeAttributes: setShapeAttributes
+				setShapeAttributes: function(attrs_){setShapeAttributes(attrs_); return this;}
 			};
 		};
 		var makePlane=function(point, normal, color){
@@ -751,10 +783,14 @@ var SvgScene=function(){
 			var index=planes.indexOf(plane);
 			planes.splice(index, 1);
 		};
+		var clonePlane=function(plane){
+			makePlane(plane.point(), plane.normal(), plane.color().clone()).setShapeAttributes(plane.shapeAttributes().clone());
+		};
 		var draw=function(){for(var i=0;i<planes.length;i++){planes[i].draw();}};
 		return {
 			makePlane: makePlane,
 			removePlane: removePlane,
+			clonePlane:clonePlane,
 			planes: function(){return planes;},
 			draw:draw
 		};
@@ -924,10 +960,16 @@ var SvgScene=function(){
 			var index=spheres.indexOf(sphere);
 			spheres.splice(index,1);
 		};
+		var cloneSphere=function(sphere){
+			makeSphere(sphere.center(), sphere.radius(), sphere.color().clone()).setShapeAttributes(sphere.shapeAttributes().clone());
+		};
 		var removeLightSource=function(lightSource){
 			lightSource.remove();
 			var index=lightSources.indexOf(lightSource);
 			lightSources.splice(index, 1);
+		};
+		var cloneLightSource=function(lightSource){
+			makeLightSource(lightSource.center(), lightSource.radius(), lightSource.color().clone());
 		};
 		var makeSphere=function(center, radius, color){
 			var id="sphere"+currentNumber;
@@ -957,6 +999,8 @@ var SvgScene=function(){
 			removeSphere: removeSphere,
 			removeLightSource: removeLightSource,
 			makeLightSource: makeLightSource,
+			cloneSphere: cloneSphere,
+			cloneLightSource: cloneLightSource,
 			spheres: function(){return spheres;},
 			lightSources: function(){return lightSources;},
 			draw: draw
@@ -1389,6 +1433,7 @@ var SvgScene=function(){
 
 			var makeButton=function(offset, text, onmousedown, onmouseup, opacity, size){
 				var opacityString=opacity?'opacity: '+opacity+'; ':'';
+				var setInnerHTML;
 				var button=document.createElement('div');
 				button.setAttribute('style', positionString(offset)+'background-color:rgb(50,50,50);color: #FFFFFF;cursor: hand;padding:0px;font-family:Arial; '+opacityString+sizeString(size));
 				button.setAttribute('align','center');
@@ -1411,11 +1456,13 @@ var SvgScene=function(){
 					var a=document.createElement('div');
 					a.setAttribute('style','position:relative;top:50%;transform: translateY(-50%);');
 					a.appendChild(document.createTextNode(text));
+					setInnerHTML=function(html){a.innerHTML=html;};
 					return a;
 				})());
 				var hideFrom=function(where_){where_.removeChild(button);};
 				var toReturn={
 					append: function(where_){where_.appendChild(button);delete toReturn.append; return this;},
+					setInnerHTML: function(html){setInnerHTML(html);return this;},
 					getNode: function(){return button;},
 					hideFrom: hideFrom
 				};
@@ -1474,7 +1521,8 @@ var SvgScene=function(){
 			})();
 			svgObject.controls.push(xmlDialog);
 
-			svgObject.controls.push(makeButton({left:'15%',bottom:0},'shapes', function(){shapeListDialog.showShapeList(sceneShapeList());}, function(){},0.75,{width:'15%',height:'10%'}).append(where));
+			//svgObject.controls.push(makeButton({left:'15%',bottom:0},'shapes', function(){shapeListDialog.showShapeList(sceneShapeList());}, function(){},0.75,{width:'15%',height:'10%'}).append(where));
+			svgObject.controls.push(makeButton({left:'15%',bottom:0},'shapes', function(){shapeListDialog.showShapeList(sceneShapeList());}, function(){},0.75,{width:'15%',height:'10%'}).append(where).setInnerHTML(Images["pencil"]));
 			var shapeListDialog=(function(){
 				var shapeListDialog=document.createElement('div');
 				var onEdit=function(){};
@@ -1745,7 +1793,7 @@ var SvgScene=function(){
 						row.appendChild(table);
 						return row;
 					},
-					"rowContainer": function(title, content, highlightOn, highlightOff, remove){
+					"rowContainer": function(title, content, highlightOn, highlightOff, remove, clone){
 						var row=document.createElement('div');
 						row.setAttribute('style','background-color:rgb(75, 75, 75);margin:5px;padding:2px;color:#FFFFFF');
 						row.onmouseover=highlightOn;
@@ -1756,9 +1804,16 @@ var SvgScene=function(){
 						titleDiv.appendChild((function(){
 							var del=document.createElement('a');
 							del.setAttribute('style','position:absolute;right:0px');
-							del.appendChild(document.createTextNode(' x'));
+							del.innerHTML=Images["trashcan"];
 							if(remove){del.onclick=function(){remove();drawThings();shapeListDialog.showShapeList(sceneShapeList());};}
 							return del;
+						})());
+						titleDiv.appendChild((function(){
+							var clo=document.createElement('a');
+							clo.setAttribute('style', 'position:absolute;right:20px');
+							clo.innerHTML=Images["cloneStamp"];
+							if(clone){clo.onclick=function(){clone();drawThings();shapeListDialog.showShapeList(sceneShapeList());};}
+							return clo;
 						})());
 						row.appendChild(titleDiv);
 						var contentDiv=document.createElement('div');
@@ -1793,7 +1848,7 @@ var SvgScene=function(){
 							plane.setColor(newcolor);
 							plane.setShapeAttributes(newshapeAttributes);
 						};
-						return {row: this["rowContainer"]("plane",content, function(){plane.highlightOn();}, function(){plane.highlightOff();}, function(){PlaneFactory.removePlane(plane);}),onEdit:onEdit};
+						return {row: this["rowContainer"]("plane",content, function(){plane.highlightOn();}, function(){plane.highlightOff();}, function(){PlaneFactory.removePlane(plane);}, function(){PlaneFactory.clonePlane(plane);}),onEdit:onEdit};
 					},
 					"sphere": function(sphere){
 						var content=document.createElement("div");
@@ -1820,7 +1875,7 @@ var SvgScene=function(){
 							sphere.setColor(newcolor);
 							sphere.setShapeAttributes(newshapeAttributes);
 						};
-						return {row: this["rowContainer"]("sphere",content, function(){sphere.highlightOn();}, function(){sphere.highlightOff();}, function(){SphereFactory.removeSphere(sphere);}), onEdit:onEdit};
+						return {row: this["rowContainer"]("sphere",content, function(){sphere.highlightOn();}, function(){sphere.highlightOff();}, function(){SphereFactory.removeSphere(sphere);}, function(){SphereFactory.cloneSphere(sphere);}), onEdit:onEdit};
 					},
 					"lightsource": function(lightSource){
 						var content=document.createElement("div");
@@ -1836,7 +1891,7 @@ var SvgScene=function(){
 						content.appendChild(this["propertyRow"]('radius: ',radiusEditor.box));
 						content.appendChild(this["propertyRow"]('color:', colorEditor.box));
 						var onEdit=function(){centerEditor.onEdit();radiusEditor.onEdit();colorEditor.onEdit();lightSource.setCenterAndRadius(newcenter, newradius);lightSource.setColor(newcolor);};
-						return {row: this["rowContainer"]("light source",content, function(){lightSource.highlightOn();}, function(){lightSource.highlightOff();}, function(){SphereFactory.removeLightSource(lightSource);}), onEdit:onEdit};
+						return {row: this["rowContainer"]("light source",content, function(){lightSource.highlightOn();}, function(){lightSource.highlightOff();}, function(){SphereFactory.removeLightSource(lightSource);}, function(){SphereFactory.cloneLightSource(lightSou);}), onEdit:onEdit};
 					}
 				};
 				var rows=[];
@@ -2180,24 +2235,24 @@ scene1.init(document.getElementById("viewPort"),
 {
   viewport: {
     lefttop: [
-      0.40587076196946703,
-      1.838236428959391,
-      -1.3860756750978163
+      -1.814832014195435,
+      3.7589601556901013,
+      -3.2291285896753905
     ],
     leftaxis: [
-      -1.16711394001479,
-      -0.10336907736522893,
-      1.040167336896705
+      -1.5867243775853979,
+      -0.012802859049223958,
+      3.6300001456158446
     ],
     topaxis: [
-      -0.30348808577157493,
-      -1.2280376388952838,
-      -0.4625662392651966
+      -0.6024419158467378,
+      -2.9410949850297436,
+      -0.27370899687072203
     ],
     viewpoint: [
-      -1.5759053141801966,
-      1.9772666788088247,
-      -2.4159031998359746
+      -13.505901230759543,
+      4.882757655353083,
+      -6.17368414499254
     ]
   },
   shapes: [
@@ -2226,6 +2281,33 @@ scene1.init(document.getElementById("viewPort"),
         transparency: 0,
         refractionIndex: 1,
         roughness: 0.4
+      }
+    },
+    {
+      type: "plane",
+      point: [
+        4,
+        0,
+        0
+      ],
+      normal: [
+        -1,
+        0,
+        0
+      ],
+      color: [
+        40,
+        40,
+        40,
+        true
+      ],
+      shapeAttributes: {
+        reflection: 0.5,
+        diffusion: 0.5,
+        shininess: 0.5,
+        transparency: 0,
+        refractionIndex: 1,
+        roughness: 0
       }
     },
     {
