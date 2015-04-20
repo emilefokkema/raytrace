@@ -94,6 +94,7 @@ var SvgScene=function(){
 	};
 
 	var threeD=(function(){
+		var or, xu, yu, zu;
 		var Point=function(x_, y_, z_){
 			var x=x_;
 			var y=y_;
@@ -116,6 +117,17 @@ var SvgScene=function(){
 				projectOnPlane: function(p,n){
 					var tmp=this.minus(p);
 					return p.plus(tmp.minus(n.project(tmp)));
+				},
+				getSomePerpendicularVector: function(){
+					if(this.cross(xu).norm()!=0){
+						return xu.projectOnPlane(or, this).unit();
+					}
+					else if(this.cross(yu).norm()!=0){
+						return yu.projectOnPlane(or, this).unit();
+					}
+					else if(this.cross(zu).norm()!=0){
+						return zu.projectOnPlane(or, this).unit();
+					}
 				},
 				rotate: function(around, axis, angle){
 					var op=this.minus(around);
@@ -189,10 +201,10 @@ var SvgScene=function(){
 				angle: angle
 			};
 		};
-		var or=Point(0,0,0);
-		var xu=Point(1,0,0);
-		var yu=Point(0,1,0);
-		var zu=Point(0,0,1);
+		or=Point(0,0,0);
+		xu=Point(1,0,0);
+		yu=Point(0,1,0);
+		zu=Point(0,0,1);
 		return {
 			Point: Point,
 			Line: Line,
@@ -472,7 +484,7 @@ var SvgScene=function(){
 	
 	var LineSegmentFactory=(function(){
 		var lineSegments=[];
-		var currentNumber=0;
+		//var currentNumber=0;
 		var LineSegment=function(from_, to_){
 			var from, to, thisSvg;
 			var setFromTo=function(from_, to_){
@@ -487,8 +499,8 @@ var SvgScene=function(){
 					thisSvg.none();
 				}else{
 					thisSvg.setFromTo(flt, tlt);
-					thisSvg.draw();
 				}
+				thisSvg.draw();
 			};
 			var setColor=function(color){
 				thisSvg.setColor(color);
@@ -510,13 +522,29 @@ var SvgScene=function(){
 				remove: remove
 			};
 		};
+		var makeArrow=function(from, to, color, thickness){
+			var shaft, arrowSide1, arrowSide2;
+			shaft=LineSegment(from, to).setSvg(svg.addLineSegment(0,0,0,0, color, thickness));
+			arrowSide1=LineSegment(from, to).setSvg(svg.addLineSegment(0,0,0,0, color, thickness));
+			arrowSide2=LineSegment(from, to).setSvg(svg.addLineSegment(0,0,0,0, color, thickness));
+			var setFromTo=function(from, to){
+				shaft.setFromTo(from, to);
+				var turnDir=from.minus(to).getSomePerpendicularVector();
+				arrowSide1.setFromTo(to, to.plus(from.minus(to).rotateWithOtherRotation(OtherRotation(or, turnDir, Math.PI/8)).scale(0.3)));
+				arrowSide2.setFromTo(to, to.plus(from.minus(to).rotateWithOtherRotation(OtherRotation(or, turnDir, -Math.PI/8)).scale(0.3)))
+			};
+			setFromTo(from, to);
+			var highlightOn=function(){shaft.highlightOn();arrowSide1.highlightOn();arrowSide2.highlightOn();};
+			var highlightOff=function(){shaft.highlightOff();arrowSide1.highlightOff();arrowSide2.highlightOff();};
+			var remove=function(){removeLineSegment(shaft);removeLineSegment(arrowSide1);removeLineSegment(arrowSide2);};
+			lineSegments.push(shaft);
+			lineSegments.push(arrowSide1);
+			lineSegments.push(arrowSide2);
+			return {setFromTo:setFromTo, highlightOn:highlightOn, highlightOff:highlightOff, remove:remove};
+		};
 		var makeLineSegment=function(from, to, color, thickness){
-			var id="lineSegment"+currentNumber;
-			var index=currentNumber;
-			var svgThing=svg.addLineSegment(0,0,0,0, id, index, color, thickness);
-			var ls=LineSegment(from, to).setSvg(svgThing);
+			var ls=LineSegment(from, to).setSvg(svg.addLineSegment(0,0,0,0, color, thickness));
 			lineSegments.push(ls);
-			currentNumber++;
 			return ls;
 		};
 		var removeLineSegment=function(lineSegment){
@@ -529,6 +557,7 @@ var SvgScene=function(){
 		}};
 		return {
 			makeLineSegment: makeLineSegment,
+			makeArrow: makeArrow,
 			removeLineSegment: removeLineSegment,
 			lineSegments: function(){return lineSegments;},
 			draw: draw
@@ -537,7 +566,7 @@ var SvgScene=function(){
 
 	var LineLineFactory=(function(){
 		var lineLines=[];
-		var currentNumber=0;
+		//var currentNumber=0;
 		var LineLine=function(p1_, p2_){
 			var p1,p2,line,thisSvg;
 			var setFromTo=function(p1_,p2_){
@@ -581,12 +610,8 @@ var SvgScene=function(){
 			};
 		};
 		var makeLineLine=function(p1, p2, color, thickness){
-			var id="lineLine"+currentNumber;
-			var index=currentNumber;
-			var svgThing=svg.addLineLine(0,0,0,0, id, index, color, thickness);
-			var ll=LineLine(p1, p2).setSvg(svgThing);
+			var ll=LineLine(p1, p2).setSvg(svg.addLineLine(0,0,0,0, color, thickness));
 			lineLines.push(ll);
-			currentNumber++;
 			return ll;
 		};
 		var removeLineLine=function(lineLine){
@@ -609,8 +634,9 @@ var SvgScene=function(){
 
 	var PlaneFactory=(function(){
 		var planes=[];
-		var currentNumber=0;
+		//var currentNumber=0;
 		var Plane=function(point_, normal_, color_){
+			var normalArrow=LineSegmentFactory.makeArrow(point_, point_.plus(normal_), color_, 3);
 			var point, normal, color, thisSvg, gridLines, xAxis, yAxis, shapeAttributes;
 			point=point_;
 			normal=normal_;
@@ -618,15 +644,7 @@ var SvgScene=function(){
 			shapeAttributes=ShapeAttributeSet({reflection: 0});
 			var setShapeAttributes=function(attrs_){shapeAttributes=attrs_;};
 			var setAxes=function(){
-				if(normal.cross(xu).norm()!=0){
-					xAxis=point.plus(xu).projectOnPlane(point, normal).minus(point).unit();
-				}
-				else if(normal.cross(yu).norm()!=0){
-					xAxis=point.plus(yu).projectOnPlane(point, normal).minus(point).unit();
-				}
-				else if(normal.cross(zu).norm()!=0){
-					xAxis=point.plus(zu).projectOnPlane(point, normal).minus(point).unit();
-				}
+				xAxis=normal.getSomePerpendicularVector();
 				yAxis=normal.cross(xAxis);
 			};
 			var getHorizonLts=function(){
@@ -688,12 +706,14 @@ var SvgScene=function(){
 				for(var i in gridLines){gridLines[i].setColor(color_);}
 			};
 			var highlightOn=function(){
+				normalArrow.highlightOn();
 				thisSvg.highlightOn();
 				for(var i=0;i<gridLines.length;i++){
 					gridLines[i].highlightOn();
 				}
 			};
 			var highlightOff=function(){
+				normalArrow.highlightOff();
 				thisSvg.highlightOff();
 				for(var i=0;i<gridLines.length;i++){
 					gridLines[i].highlightOff();
@@ -705,6 +725,7 @@ var SvgScene=function(){
 					console.log("[plane] setting point "+point_.toString()+" and normal "+normal_.toString()+"!");
 					point=point_;
 					normal=normal_;
+					normalArrow.setFromTo(point_, point_.plus(normal_));
 					setAxes();
 					setGrid();
 				}
@@ -722,6 +743,7 @@ var SvgScene=function(){
 				thisSvg=svg_;
 			};
 			var remove=function(){
+				normalArrow.remove();
 				thisSvg.remove();
 				for(var i in gridLines){
 					LineLineFactory.removeLineLine(gridLines[i]);
@@ -760,12 +782,9 @@ var SvgScene=function(){
 			};
 		};
 		var makePlane=function(point, normal, color){
-			var id="plane"+currentNumber;
-			var index=currentNumber;
-			var svgThing=svg.addPlane(0,0,0,0,0,0,0,0,id,index, color);
+			var svgThing=svg.addPlane(0,0,0,0,0,0,0,0, color);
 			var p=Plane(point, normal, color).setSvg(svgThing);
 			planes.push(p);
-			currentNumber++;
 			return p;
 		};
 		var removePlane=function(plane){
@@ -789,7 +808,7 @@ var SvgScene=function(){
 	var SphereFactory=(function(){
 		var spheres=[];
 		var lightSources=[];
-		var currentNumber=0;
+		//var currentNumber=0;
 		var Sphere=function(center_, radius_, color_, toBecomeLightSource){
 			var center, radius, color, gridLineSegments, thisSvg, shapeAttributes;
 			center=center_;
@@ -962,12 +981,9 @@ var SvgScene=function(){
 			makeLightSource(lightSource.center(), lightSource.radius(), lightSource.color().clone());
 		};
 		var makeSphere=function(center, radius, color){
-			var id="sphere"+currentNumber;
-			var index=currentNumber;
 			var svgThing=svg.addSphere(color);
 			var s=Sphere(center, radius, color, false).setSvg(svgThing);
 			spheres.push(s);
-			currentNumber++;
 			return s;
 		};
 		var makeLightSource=function(center, radius, color){
@@ -1187,7 +1203,7 @@ var SvgScene=function(){
 				setColor: function(color_){color=color_;}
 			};
 		};
-		var SvgLine=function(l1,t1,l2,t2,id, color_, thickness){
+		var SvgLine=function(l1,t1,l2,t2, color_, thickness){
 			var color=color_;
 			var svgl={};
 			var svgElement=whereSvg.appendChild((function(){
@@ -1226,7 +1242,7 @@ var SvgScene=function(){
 			svgl.none=function(){svgl.setFromTo({left:0,top:0},{left:0,top:0});};
 			return svgl;
 		};
-		var SvgPlane=function(l1, t1, l2, t2, l3, t3, l4, t4, id, color_){
+		var SvgPlane=function(l1, t1, l2, t2, l3, t3, l4, t4, color_){
 			var color=color_;
 			var svgpl={};
 			var svgElement=whereSvg.appendChild((function(){
@@ -1311,9 +1327,9 @@ var SvgScene=function(){
 			};
 			return svgsph;
 		};
-		var addPlane=function(l1, t1, l2, t2, l3, t3, l4, t4, id, index, color){
-			var s=SvgPlane(l1, t1, l2, t2, l3, t3, l4, t4, id, color);
-			planes[index]=s;
+		var addPlane=function(l1, t1, l2, t2, l3, t3, l4, t4, color){
+			var s=SvgPlane(l1, t1, l2, t2, l3, t3, l4, t4, color);
+			planes.push(s);
 			return s;
 		};
 		var addSphere=function(color){
@@ -1326,14 +1342,14 @@ var SvgScene=function(){
 			lightSources.push(s);
 			return s;
 		};
-		var addLineSegment=function(l1,t1,l2,t2, id, index, color, thickness){
-			var s=SvgLine(l1,t1,l2,t2,id,color, thickness);
-			lineSegments[index]=s;
+		var addLineSegment=function(l1,t1,l2,t2, color, thickness){
+			var s=SvgLine(l1,t1,l2,t2,color, thickness);
+			lineSegments.push(s);
 			return s;
 		};
-		var addLineLine=function(l1,t1,l2,t2,id,index,color, thickness){
-			var s=SvgLine(l1,t1,l2,t2,id,color, thickness);
-			lineLines[index]=s;
+		var addLineLine=function(l1,t1,l2,t2,color, thickness){
+			var s=SvgLine(l1,t1,l2,t2,color, thickness);
+			lineLines.push(s);
 			return s;
 		};
 		var svgObject={};
